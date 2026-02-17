@@ -1,0 +1,83 @@
+name: Raspberry Pi OS armhf build
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  release:
+    types: [published]
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Switch apt sources to ports.ubuntu.com for armhf
+        run: |
+          FLAVOR="$(lsb_release -sc)"
+
+          if dpkg-vendor --derives-from Ubuntu; then
+            sudo tee /etc/apt/sources.list.d/armhf.list <<LIST
+          deb [arch=armhf] http://ports.ubuntu.com/ ${FLAVOR} main restricted
+          deb [arch=armhf] http://ports.ubuntu.com/ ${FLAVOR}-updates main restricted
+          deb [arch=armhf] http://ports.ubuntu.com/ ${FLAVOR} universe
+          deb [arch=armhf] http://ports.ubuntu.com/ ${FLAVOR}-updates universe
+          deb [arch=armhf] http://ports.ubuntu.com/ ${FLAVOR} multiverse
+          deb [arch=armhf] http://ports.ubuntu.com/ ${FLAVOR}-updates multiverse
+          deb [arch=armhf] http://ports.ubuntu.com/ ${FLAVOR}-backports main restricted universe multiverse
+          LIST
+            sudo sed -E -i 's/deb (http|file|mirror)/deb [arch=amd64,i386] \1/' /etc/apt/sources.list
+            cat /etc/apt/sources.list
+          fi
+
+      - name: Install cross compile tools
+        run: |
+          sudo apt-get update
+          sudo dpkg --add-architecture armhf
+          sudo apt-get update
+          sudo apt-get install -y cmake pkg-config libsdl2-dev:armhf g++-arm-linux-gnueabihf
+
+      - name: Configure and build
+        run: |
+          export PKG_CONFIG_LIBDIR=/usr/lib/arm-linux-gnueabihf/pkgconfig
+          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON -DCMAKE_INSTALL_PREFIX=/usr \
+            -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc \
+            -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ \
+            -DCPACK_GENERATOR=DEB \
+            -DCPACK_DEBIAN_PACKAGE_ARCHITECTURE=armhf
+          cmake --build build -j 2
+          cpack --config build/CPackConfig.cmake -G DEB -B build
+          deb_file=$(ls build/*.deb | head -n 1)
+          if [ -z "$deb_file" ]; then
+            echo "DEB package was not generated."
+            exit 1
+          fi
+          mv "$deb_file" build/QUASI88_Linux_armhf.deb
+
+      - name: Upload build artifact deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUASI88_Linux_armhf.deb
+          path: build/QUASI88_Linux_armhf.deb
+
+      - name: Update Release deb
+        if: ${{ github.event_name == 'release' && !env.ACT }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: build/QUASI88_Linux_armhf.deb
+          overwrite: true

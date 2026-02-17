@@ -1,0 +1,69 @@
+name: macOS Build Universal
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  release:
+    types: [published]
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-macos:
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode 26.2
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.2'
+
+      - name: Install SDL2 (Universal Framework)
+        run: |
+          curl -L https://github.com/libsdl-org/SDL/releases/download/release-2.30.11/SDL2-2.30.11.dmg -o SDL2.dmg
+          hdiutil attach SDL2.dmg
+          sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/
+          hdiutil detach /Volumes/SDL2
+
+      - name: Build QUASI88 macOS app
+        run: |
+          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DSDL2_INCLUDE_DIR=/Library/Frameworks/SDL2.framework/Headers \
+            -DSDL2_LIBRARY=/Library/Frameworks/SDL2.framework
+          cmake --build build --config Release
+          cpack --config build/CPackConfig.cmake -G DragNDrop -B build
+          dmg_file=$(ls build/*.dmg | head -n 1)
+          mv "$dmg_file" build/QUASI88_macOS_Universal.dmg
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUASI88_macOS_Universal.dmg
+          path: build/QUASI88_macOS_Universal.dmg
+
+      - name: Update Release
+        if: ${{ github.event_name == 'release' && !env.ACT }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: build/QUASI88_macOS_Universal.dmg
+          overwrite: true

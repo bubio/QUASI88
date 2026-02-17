@@ -1,0 +1,71 @@
+name: Linux x86_64
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  release:
+    types: [published]
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependency
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev rpm
+
+      - name: Build QUASI88 Linux app
+        run: |
+          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build -j 2 --target package
+          rpm_file=$(ls build/*.rpm | head -n 1)
+          deb_file=$(ls build/*.deb | head -n 1)
+          mv "$rpm_file" build/QUASI88_Linux_x86_64.rpm
+          mv "$deb_file" build/QUASI88_Linux_x86_64.deb
+
+      - name: Upload build artifact rpm
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUASI88_Linux_x86_64.rpm
+          path: build/QUASI88_Linux_x86_64.rpm
+
+      - name: Upload build artifact deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUASI88_Linux_x86_64.deb
+          path: build/QUASI88_Linux_x86_64.deb
+
+      - name: Update Release rpm
+        if: ${{ github.event_name == 'release' && !env.ACT }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: build/QUASI88_Linux_x86_64.rpm
+          overwrite: true
+
+      - name: Update Release deb
+        if: ${{ github.event_name == 'release' && !env.ACT }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: build/QUASI88_Linux_x86_64.deb
+          overwrite: true

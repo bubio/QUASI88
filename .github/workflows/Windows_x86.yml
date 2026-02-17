@@ -1,0 +1,66 @@
+name: Windows x86_64
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  release:
+    types: [published]
+    paths-ignore:
+      - '*.md'
+      - 'Documents/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install SDL2
+        shell: pwsh
+        run: vcpkg install sdl2:x64-windows
+
+      - name: Build QUASI88 (x64)
+        shell: pwsh
+        run: |
+          cmake -S . -B build -A x64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake --build build --config Release
+          cpack --config build/CPackConfig.cmake -G ZIP -B build
+          $zip = Get-ChildItem build -Filter *.zip | Select-Object -First 1
+          if (-not $zip) { throw "ZIP package was not generated." }
+          Move-Item $zip.FullName build/QUASI88_Windows_x86_64.zip -Force
+
+      - name: Upload Artifacts (QUASI88_Windows_x86_64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUASI88_Windows_x86_64
+          path: build/QUASI88_Windows_x86_64.zip
+
+      - name: Update Release x86_64
+        if: ${{ github.event_name == 'release' && !env.ACT }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: build/QUASI88_Windows_x86_64.zip
+          overwrite: true
