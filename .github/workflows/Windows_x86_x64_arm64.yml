@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: windows-2025
+    runs-on: windows-2022
 
     steps:
       - name: Checkout repository
@@ -49,24 +49,30 @@ jobs:
         shell: pwsh
         run: |
           cmake -S . -B build_x64 -A x64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-          cmake --build build_x64 --config Release --target package
+          cmake --build build_x64 --config Release
+          cpack --config build_x64/CPackConfig.cmake -G ZIP -B build_x64
           $zip = Get-ChildItem build_x64 -Filter *.zip | Select-Object -First 1
+          if (-not $zip) { throw "x64 ZIP package was not generated." }
           Move-Item $zip.FullName QUASI88_Windows_x86_64.zip -Force
 
       - name: Build QUASI88 (Win32)
         shell: pwsh
         run: |
           cmake -S . -B build_x86 -A Win32 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-          cmake --build build_x86 --config Release --target package
+          cmake --build build_x86 --config Release
+          cpack --config build_x86/CPackConfig.cmake -G ZIP -B build_x86
           $zip = Get-ChildItem build_x86 -Filter *.zip | Select-Object -First 1
+          if (-not $zip) { throw "Win32 ZIP package was not generated." }
           Move-Item $zip.FullName QUASI88_Windows_x86_32.zip -Force
 
       - name: Build QUASI88 (ARM64)
         shell: pwsh
         run: |
           cmake -S . -B build_arm64 -A ARM64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-          cmake --build build_arm64 --config Release --target package
+          cmake --build build_arm64 --config Release
+          cpack --config build_arm64/CPackConfig.cmake -G ZIP -B build_arm64
           $zip = Get-ChildItem build_arm64 -Filter *.zip | Select-Object -First 1
+          if (-not $zip) { throw "ARM64 ZIP package was not generated." }
           Move-Item $zip.FullName QUASI88_Windows_ARM64.zip -Force
 
       - name: Upload Artifacts (QUASI88_Windows_x86_64)
