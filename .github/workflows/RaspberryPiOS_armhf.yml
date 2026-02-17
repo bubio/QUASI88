@@ -60,8 +60,13 @@ jobs:
             -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ \
             -DCPACK_GENERATOR=DEB \
             -DCPACK_DEBIAN_PACKAGE_ARCHITECTURE=armhf
-          cmake --build build --target package -j 2
+          cmake --build build -j 2
+          cpack --config build/CPackConfig.cmake -G DEB -B build
           deb_file=$(ls build/*.deb | head -n 1)
+          if [ -z "$deb_file" ]; then
+            echo "DEB package was not generated."
+            exit 1
+          fi
           mv "$deb_file" build/QUASI88_Linux_armhf.deb
 
       - name: Upload build artifact deb
