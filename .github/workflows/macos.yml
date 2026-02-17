@@ -1,0 +1,41 @@
+name: Build and Package (macOS)
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install SDL2 (Universal Framework)
+      run: |
+        curl -L https://github.com/libsdl-org/SDL/releases/download/release-2.30.11/SDL2-2.30.11.dmg -o SDL2.dmg
+        hdiutil attach SDL2.dmg
+        sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/
+        hdiutil detach /Volumes/SDL2
+
+    - name: Configure CMake
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+          -DSDL2_INCLUDE_DIR=/Library/Frameworks/SDL2.framework/Headers \
+          -DSDL2_LIBRARY=/Library/Frameworks/SDL2.framework
+
+    - name: Package
+      run: |
+        cd build
+        cpack -G DragNDrop
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: QUASI88-macOS-DMG
+        path: build/*.dmg
