@@ -1,0 +1,38 @@
+name: Build and Package (macOS)
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install SDL2
+      run: brew install sdl2
+
+    - name: Configure CMake
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Package
+      run: |
+        cd build
+        cpack -G DragNDrop
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: QUASI88-macOS-DMG
+        path: build/*.dmg
