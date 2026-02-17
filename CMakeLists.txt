@@ -248,7 +248,7 @@ endif()
 
 # Link Libraries
 if(APPLE)
-    target_link_libraries(quasi88 PRIVATE SDL2::SDL2 SDL2::SDL2main "-framework Cocoa")
+    target_link_libraries(quasi88 PRIVATE SDL2::SDL2 "-framework Cocoa")
 elseif(WIN32)
     target_link_libraries(quasi88 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 else()

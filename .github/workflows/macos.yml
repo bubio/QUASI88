@@ -29,6 +29,9 @@ jobs:
           -DSDL2_INCLUDE_DIR=/Library/Frameworks/SDL2.framework/Headers \
           -DSDL2_LIBRARY=/Library/Frameworks/SDL2.framework
 
+    - name: Build
+      run: cmake --build build --config Release
+
     - name: Package
       run: |
         cd build
