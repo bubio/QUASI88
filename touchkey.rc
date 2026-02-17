@@ -1,0 +1,564 @@
+#----------------------------------------------------------------------
+# touchkey.rc
+
+#	このファイルは、QUASI88 のタッチキーボード設定ファイルです。
+#
+
+#----------------------------------------------------------------------
+
+# 簡単な説明
+#
+#	・1行は 255文字以内としてください。
+#	・# から行末までは、コメントとみなされます。
+#	・各パラメータの区切りは、1個以上のスペースかタブです。
+#
+#	[レイアウト名] の行から、次の [レイアウト名] の行 (またはファイル終端)
+#	までが、一つのレイアウトの設定になります。
+#
+#	[レイアウト名] の行は、以下の書式になります
+#
+#		[レイアウト名] 有効フラグ 全体幅 全体高 x補正量 y補正量
+#
+#	  レイアウト名は、任意のASCII文字列です。重複してはいけません。
+#	有効フラグは、True/1/False/0 のいずれかです。 Flase/0 の場合は、この
+#	レイアウトは無効になります (つまり、全てコメントアウトされたものと
+#	みなされます)。 True/1 の場合、このレイアウトは有効になります。 
+#	  全体幅・全体高は、キーを配置するレイアウト座標の最大値です。
+#	全体幅は 1280以下、全体量は 800以下としてください。
+#	  x補正量・y補正量は、後述するキーの配置の、 x座標・y座標の補正量です。
+#	x補正量は -640 から +640、y補正量は -400 から +400 の値としてください。
+#	x補正量・y補正量は、省略できます。省略時は +0 とみなします。
+#
+#	[レイアウト名] の行以降に、キーの配置を記述してください。
+#
+#		タッチキー名称 ロック属性 x座標 y座標
+#
+#	  タッチキー名称は、KEYTOP_XXX というような文字列で指定します。
+#	例えば KEYTOP_1 の場合、このキーをタッチすると『1』、シフトキーと
+#	ともにタッチすると『!』、のようになります。
+#	  ロック属性は、NO/0/SINGLE/1/DOUBLE/2 のいずれかです。NO/0 の場合
+#	は、キーロック不可、 SINGLE/1 の場合は、シングルクリックでロック可、
+#	DOUBLE/2 の場合は、ダブルクリックでロック可、となります。
+#	  x座標・y座標は、キーを表示する座標で、キーの中心の座標を指定します。
+#	正数の場合は全体の左上からの座標、負数の場合は右下からの座標です。
+#	実際には、ここで指定した座標に前述の x補正量・y補正量の値を加算した
+#	座標に表示されます。表示される x座標や y座標が、全体幅や全体高の
+#	範囲内になるようにしてください。
+#
+#	  キーごとに表示される画像とサイズは決まっていて、文字キーならサイズは
+#	36×36 ドットとなります。これは 40×40 のグリッドに配置することを想定
+#	しています。
+#
+#	キーの配置は最大127個まで設定できます (それ以上は無視されます)。
+#	同じキーを複数個所に設定できます。
+#	同じレイアウト座標に複数のキーを設定した場合、どちらかが優先されます。
+#
+
+#----------------------------------------------------------------------
+
+# 後期型キーボードレイアウト
+#
+#   +------+  +------+   +--------++--------++--------++--------++--------+   +--------++--------++--------++--------++--------+      +------++------+
+#   |40    |10|40    |15 |50      ||50      ||50      ||50      ||50      |15 |50      ||50      ||50      ||50      ||50      | 30   |40    ||40    | 190
+#   |      |  |      |   |        ||        ||        ||        ||        |   |        ||        ||        ||        ||        |      |      ||      |
+#   +------+  +------+   +--------++--------++--------++--------++--------+   +--------++--------++--------++--------++--------+      +------++------+      
+#   
+#   +--------++------++------++------++------++------++------++------++------++------++------++------++------++------++--------+      +------++------+      +------++------++------++------+
+#   |50      ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||50      | 30   |40    ||40    | 30   |40    ||40    ||40    ||40    |
+#   |        ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||        |      |      ||      |      |      ||      ||      ||      |
+#   +--------++------++------++------++------++------++------++------++------++------++------++------++------++------++--------+      +------++------+      +------++------++------++------+
+#   +------------++------++------++------++------++------++------++------++------++------++------++------++------+  +----------+                            +------++------++------++------+
+#   |70          ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    | 2|60        | 140                        |40    ||40    ||40    ||40    |
+#   |            ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      |  |          |                            |      ||      ||      ||      |
+#   +------------++------++------++------++------++------++------++------++------++------++------++------++------+  |          |                            +------++------++------++------+
+#   +------++------++------++------++------++------++------++------++------++------++------++------++------++------+|          |          +------+          +------++------++------++------+
+#   |40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||          | 50       |40    | 50       |40    ||40    ||40    ||40    |
+#   |      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||          |          |      |          |      ||      ||      ||      |
+#   +------++------++------++------++------++------++------++------++------++------++------++------++------++------++----------+          +------+          +------++------++------++------+
+#   +------------------++------++------++------++------++------++------++------++------++------++------++------++--------------+  +------++------++------+  +------++------++------++------+
+#   |100               ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||80            |10|40    ||40    ||40    |10|40    ||40    ||40    ||40    |
+#   |                  ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||              |  |      ||      ||      |  |      ||      ||      ||      |
+#   +------------------++------++------++------++------++------++------++------++------++------++------++------++--------------+  +------++------++------+  +------++------++------++------+
+#               +------++------++--------------++------------------++------------------++------++------+                                                    +------++------++------++------+
+#    60         |40    ||40    ||80            ||100               ||100               ||40    ||40    | 260                                                |40    ||40    ||40    ||40    |
+#               |      ||      ||              ||                  ||                  ||      ||      |                                                    |      ||      ||      ||      |
+#               +------++------++--------------++------------------++------------------++------++------+                                                    +------++------++------++------+
+
+
+#----------------------------------------------------------------------
+
+# フルキーボード後期型 (PC-8801FH/MH以降)
+#
+
+[NEWMODEL]	False	940	260	+10	+0
+
+KEYTOP_STOP		NO	 20	 20	# size 36x36
+KEYTOP_COPY		NO	 70	 20	# size 36x36
+KEYTOP_F1		NO	130	 20	# size 46x36
+KEYTOP_F2		NO	180	 20	# size 46x36
+KEYTOP_F3		NO	230	 20	# size 46x36
+KEYTOP_F4		NO	280	 20	# size 46x36
+KEYTOP_F5		NO	330	 20	# size 46x36
+KEYTOP_F6		NO	395	 20	# size 46x36
+KEYTOP_F7		NO	445	 20	# size 46x36
+KEYTOP_F8		NO	495	 20	# size 46x36
+KEYTOP_F9		NO	545	 20	# size 46x36
+KEYTOP_F10		NO	595	 20	# size 46x36
+KEYTOP_ROLLUP		NO	670	 20	# size 36x36
+KEYTOP_ROLLDOWN		NO	710	 20	# size 36x36
+KEYTOP_F6_FUNC		NO	780	 20	# size 36x36
+KEYTOP_F7_FUNC		NO	820	 20	# size 36x36
+KEYTOP_F8_FUNC		NO	860	 20	# size 36x36
+KEYTOP_F9_FUNC		NO	900	 20	# size 36x36
+
+KEYTOP_ESC		NO	 25	 80	# size 46x36
+KEYTOP_1		NO	 70	 80	# size 36x36
+KEYTOP_2		NO	110	 80	# size 36x36
+KEYTOP_3		NO	150	 80	# size 36x36
+KEYTOP_4		NO	190	 80	# size 36x36
+KEYTOP_5		NO	230	 80	# size 36x36
+KEYTOP_6		NO	270	 80	# size 36x36
+KEYTOP_7		NO	310	 80	# size 36x36
+KEYTOP_8		NO	350	 80	# size 36x36
+KEYTOP_9		NO	390	 80	# size 36x36
+KEYTOP_0		NO	430	 80	# size 36x36
+KEYTOP_MINUS		NO	470	 80	# size 36x36
+KEYTOP_CARET		NO	510	 80	# size 36x36
+KEYTOP_YEN		NO	550	 80	# size 36x36
+KEYTOP_BS		NO	595	 80	# size 46x36
+KEYTOP_INS		NO	670	 80	# size 36x36
+KEYTOP_DEL		NO	710	 80	# size 36x36
+KEYTOP_HOME		NO	780	 80	# size 36x36
+KEYTOP_HELP		NO	820	 80	# size 36x36
+KEYTOP_KP_SUB		NO	860	 80	# size 36x36
+KEYTOP_KP_DIVIDE	NO	900	 80	# size 36x36
+
+KEYTOP_TAB		NO	 35	120	# size 66x36
+KEYTOP_Q		NO	 90	120	# size 36x36
+KEYTOP_W		NO	130	120	# size 36x36
+KEYTOP_E		NO	170	120	# size 36x36
+KEYTOP_R		NO	210	120	# size 36x36
+KEYTOP_T		NO	250	120	# size 36x36
+KEYTOP_Y		NO	290	120	# size 36x36
+KEYTOP_U		NO	330	120	# size 36x36
+KEYTOP_I		NO	370	120	# size 36x36
+KEYTOP_O		NO	410	120	# size 36x36
+KEYTOP_P		NO	450	120	# size 36x36
+KEYTOP_AT		NO	490	120	# size 36x36
+KEYTOP_BRACKETLEFT	NO	530	120	# size 36x36
+KEYTOP_RETURNL		NO	590	140	# size 56x76
+KEYTOP_KP_7		NO	780	120	# size 36x36
+KEYTOP_KP_8		NO	820	120	# size 36x36
+KEYTOP_KP_9		NO	860	120	# size 36x36
+KEYTOP_KP_MULTIPLY	NO	900	120	# size 36x36
+
+KEYTOP_CTRL		DOUBLE	 20	160	# size 36x36
+KEYTOP_CAPS		SINGLE	 60	160	# size 36x36
+KEYTOP_A		NO	100	160	# size 36x36
+KEYTOP_S		NO	140	160	# size 36x36
+KEYTOP_D		NO	180	160	# size 36x36
+KEYTOP_F		NO	220	160	# size 36x36
+KEYTOP_G		NO	260	160	# size 36x36
+KEYTOP_H		NO	300	160	# size 36x36
+KEYTOP_J		NO	340	160	# size 36x36
+KEYTOP_K		NO	380	160	# size 36x36
+KEYTOP_L		NO	420	160	# size 36x36
+KEYTOP_SEMICOLON	NO	460	160	# size 36x36
+KEYTOP_COLON		NO	500	160	# size 36x36
+KEYTOP_BRACKETRIGHT	NO	540	160	# size 36x36
+KEYTOP_UP		NO	690	160	# size 36x36
+KEYTOP_KP_4		NO	780	160	# size 36x36
+KEYTOP_KP_5		NO	820	160	# size 36x36
+KEYTOP_KP_6		NO	860	160	# size 36x36
+KEYTOP_KP_ADD		NO	900	160	# size 36x36
+
+KEYTOP_SHIFTL		DOUBLE	 50	200	# size 96x36
+KEYTOP_Z		NO	120	200	# size 36x36
+KEYTOP_X		NO	160	200	# size 36x36
+KEYTOP_C		NO	200	200	# size 36x36
+KEYTOP_V		NO	240	200	# size 36x36
+KEYTOP_B		NO	280	200	# size 36x36
+KEYTOP_N		NO	320	200	# size 36x36
+KEYTOP_M		NO	360	200	# size 36x36
+KEYTOP_COMMA		NO	400	200	# size 36x36
+KEYTOP_PERIOD		NO	440	200	# size 36x36
+KEYTOP_SLASH		NO	480	200	# size 36x36
+KEYTOP_UNDERSCORE	NO	520	200	# size 36x36
+KEYTOP_SHIFTR		DOUBLE	580	200	# size 76x36
+KEYTOP_LEFT		NO	650	200	# size 36x36
+KEYTOP_DOWN		NO	690	200	# size 36x36
+KEYTOP_RIGHT		NO	730	200	# size 36x36
+KEYTOP_KP_1		NO	780	200	# size 36x36
+KEYTOP_KP_2		NO	820	200	# size 36x36
+KEYTOP_KP_3		NO	860	200	# size 36x36
+KEYTOP_KP_EQUAL		NO	900	200	# size 36x36
+
+#KEYTOP_ROMAJI		SINGLE	 20	240	# size 36x36
+KEYTOP_KANA		SINGLE	 80	240	# size 36x36
+KEYTOP_GRAPH		DOUBLE	120	240	# size 36x36
+KEYTOP_KETTEI		NO	180	240	# size 76x36
+KEYTOP_SPACE		NO	270	240	# size 96x36
+KEYTOP_HENKAN		NO	370	240	# size 96x36
+KEYTOP_PC		NO	440	240	# size 36x36
+KEYTOP_ZENKAKU		NO	480	240	# size 36x36
+KEYTOP_KP_0		NO	780	240	# size 36x36
+KEYTOP_KP_COMMA		NO	820	240	# size 36x36
+KEYTOP_KP_PERIOD	NO	860	240	# size 36x36
+KEYTOP_RETURNR		NO	900	240	# size 36x36
+#KEYTOP_NUM		SINGLE	520	240	# size 36x36
+KEYTOP_PREV		NO	560	240	# size 36x36
+KEYTOP_NEXT		NO	600	240	# size 36x36
+
+
+#----------------------------------------------------------------------
+
+# 前期型キーボードレイアウト
+#
+#    +------++------+      +--------------++--------------++--------------++--------------++--------------+      +------++------+    +------++------++------++------+
+#    |40    ||40    | 30   |80            ||80            ||80            ||80            ||80            | 30   |40    ||40    | 20 |40    ||40    ||40    ||40    |
+#    |      ||      |      |              ||              ||              ||              ||              |      |      ||      |    |      ||      ||      ||      |
+#    +------++------+      +--------------++--------------++--------------++--------------++--------------+      +------++------+    +------++------++------++------+
+#    
+#    +--------++------++------++------++------++------++------++------++------++------++------++------++------++------++--------+    +------++------++------++------+
+#    |50      ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||50      | 20 |40    ||40    ||40    ||40    |
+#    |        ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||        |    |      ||      ||      ||      |
+#    +--------++------++------++------++------++------++------++------++------++------++------++------++------++------++--------+    +------++------++------++------+
+#    +------------++------++------++------++------++------++------++------++------++------++------++------++------+  +----------+    +------++------++------++------+
+#    |70          ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    | 2|60        | 20 |40    ||40    ||40    ||40    |
+#    |            ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      |  |          |    |      ||      ||      ||      |
+#    +------------++------++------++------++------++------++------++------++------++------++------++------++------+  |          |    +------++------++------++------+
+#    +------++------++------++------++------++------++------++------++------++------++------++------++------++------+|          |    +------++------++------++------+
+#    |40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||          | 20 |40    ||40    ||40    ||40    |
+#    |      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||          |    |      ||      ||      ||      |
+#    +------++------++------++------++------++------++------++------++------++------++------++------++------++------++----------+    +------++------++------++------+
+#    +------------------++------++------++------++------++------++------++------++------++------++------++------++--------------+    +------++------++------++------+
+#    |100               ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||40    ||80            | 20 |40    ||40    ||40    ||40    |
+#    |                  ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||      ||              |    |      ||      ||      ||      |
+#    +------------------++------++------++------++------++------++------++------++------++------++------++------++--------------+    +------++------++------++------+
+#                        +------++------++--------------------------------------------------------------+                            +------++------++------++------+
+#     100                |40    ||40    ||320                                                           | 140                        |40    ||40    ||40    ||40    |
+#                        |      ||      ||                                                              |                            |      ||      ||      ||      |
+#                        +------++------++--------------------------------------------------------------+                            +------++------++------++------+
+
+#----------------------------------------------------------------------
+
+# フルキーボード前期型 (PC-8801mkIIからFR/FR)
+#
+
+[OLDMODEL]	False	820	260	+10	+0
+
+KEYTOP_STOP		NO	 20	 20	# size 36x36
+KEYTOP_COPY		NO	 60	 20	# size 36x36
+KEYTOP_F1_OLD		NO	150	 20	# size 76x36
+KEYTOP_F2_OLD		NO	230	 20	# size 76x36
+KEYTOP_F3_OLD		NO	310	 20	# size 76x36
+KEYTOP_F4_OLD		NO	390	 20	# size 76x36
+KEYTOP_F5_OLD		NO	470	 20	# size 76x36
+KEYTOP_ROLLUP		NO	560	 20	# size 36x36
+KEYTOP_ROLLDOWN		NO	600	 20	# size 36x36
+KEYTOP_UP		NO	660	 20	# size 36x36
+KEYTOP_DOWN		NO	700	 20	# size 36x36
+KEYTOP_LEFT		NO	740	 20	# size 36x36
+KEYTOP_RIGHT		NO	780	 20	# size 36x36
+
+KEYTOP_ESC		NO	 25	 80	# size 46x36
+KEYTOP_1		NO	 70	 80	# size 36x36
+KEYTOP_2		NO	110	 80	# size 36x36
+KEYTOP_3		NO	150	 80	# size 36x36
+KEYTOP_4		NO	190	 80	# size 36x36
+KEYTOP_5		NO	230	 80	# size 36x36
+KEYTOP_6		NO	270	 80	# size 36x36
+KEYTOP_7		NO	310	 80	# size 36x36
+KEYTOP_8		NO	350	 80	# size 36x36
+KEYTOP_9		NO	390	 80	# size 36x36
+KEYTOP_0		NO	430	 80	# size 36x36
+KEYTOP_MINUS		NO	470	 80	# size 36x36
+KEYTOP_CARET		NO	510	 80	# size 36x36
+KEYTOP_YEN		NO	550	 80	# size 36x36
+KEYTOP_INSDEL		NO	595	 80	# size 46x36
+KEYTOP_HOME		NO	660	 80	# size 36x36
+KEYTOP_HELP		NO	700	 80	# size 36x36
+KEYTOP_KP_SUB		NO	740	 80	# size 36x36
+KEYTOP_KP_DIVIDE	NO	780	 80	# size 36x36
+
+KEYTOP_TAB		NO	 35	120	# size 66x36
+KEYTOP_Q		NO	 90	120	# size 36x36
+KEYTOP_W		NO	130	120	# size 36x36
+KEYTOP_E		NO	170	120	# size 36x36
+KEYTOP_R		NO	210	120	# size 36x36
+KEYTOP_T		NO	250	120	# size 36x36
+KEYTOP_Y		NO	290	120	# size 36x36
+KEYTOP_U		NO	330	120	# size 36x36
+KEYTOP_I		NO	370	120	# size 36x36
+KEYTOP_O		NO	410	120	# size 36x36
+KEYTOP_P		NO	450	120	# size 36x36
+KEYTOP_AT		NO	490	120	# size 36x36
+KEYTOP_BRACKETLEFT	NO	530	120	# size 36x36
+KEYTOP_RETURNL		NO	590	140	# size 56x76
+KEYTOP_KP_7		NO	660	120	# size 36x36
+KEYTOP_KP_8		NO	700	120	# size 36x36
+KEYTOP_KP_9		NO	740	120	# size 36x36
+KEYTOP_KP_MULTIPLY	NO	780	120	# size 36x36
+
+KEYTOP_CTRL		DOUBLE	 20	160	# size 36x36
+KEYTOP_CAPS		SINGLE	 60	160	# size 36x36
+KEYTOP_A		NO	100	160	# size 36x36
+KEYTOP_S		NO	140	160	# size 36x36
+KEYTOP_D		NO	180	160	# size 36x36
+KEYTOP_F		NO	220	160	# size 36x36
+KEYTOP_G		NO	260	160	# size 36x36
+KEYTOP_H		NO	300	160	# size 36x36
+KEYTOP_J		NO	340	160	# size 36x36
+KEYTOP_K		NO	380	160	# size 36x36
+KEYTOP_L		NO	420	160	# size 36x36
+KEYTOP_SEMICOLON	NO	460	160	# size 36x36
+KEYTOP_COLON		NO	500	160	# size 36x36
+KEYTOP_BRACKETRIGHT	NO	540	160	# size 36x36
+KEYTOP_KP_4		NO	660	160	# size 36x36
+KEYTOP_KP_5		NO	700	160	# size 36x36
+KEYTOP_KP_6		NO	740	160	# size 36x36
+KEYTOP_KP_ADD		NO	780	160	# size 36x36
+
+KEYTOP_SHIFTL		DOUBLE	 50	200	# size 96x36
+KEYTOP_Z		NO	120	200	# size 36x36
+KEYTOP_X		NO	160	200	# size 36x36
+KEYTOP_C		NO	200	200	# size 36x36
+KEYTOP_V		NO	240	200	# size 36x36
+KEYTOP_B		NO	280	200	# size 36x36
+KEYTOP_N		NO	320	200	# size 36x36
+KEYTOP_M		NO	360	200	# size 36x36
+KEYTOP_COMMA		NO	400	200	# size 36x36
+KEYTOP_PERIOD		NO	440	200	# size 36x36
+KEYTOP_SLASH		NO	480	200	# size 36x36
+KEYTOP_UNDERSCORE	NO	520	200	# size 36x36
+KEYTOP_SHIFTR		DOUBLE	580	200	# size 76x36
+KEYTOP_KP_1		NO	660	200	# size 36x36
+KEYTOP_KP_2		NO	700	200	# size 36x36
+KEYTOP_KP_3		NO	740	200	# size 36x36
+KEYTOP_KP_EQUAL		NO	780	200	# size 36x36
+
+#KEYTOP_ROMAJI		SINGLE	 20	240	# size 36x36
+KEYTOP_KANA		SINGLE	120	240	# size 36x36
+KEYTOP_GRAPH		DOUBLE	160	240	# size 36x36
+KEYTOP_SPACE_OLD	NO	340	240	# size 316x36
+KEYTOP_KP_0		NO	660	240	# size 36x36
+KEYTOP_KP_COMMA		NO	700	240	# size 36x36
+KEYTOP_KP_PERIOD	NO	740	240	# size 36x36
+KEYTOP_RETURNR		NO	780	240	# size 36x36
+#KEYTOP_NUM		SINGLE	520	240	# size 36x36
+KEYTOP_PREV		NO	560	240	# size 36x36
+KEYTOP_NEXT		NO	600	240	# size 36x36
+
+
+#----------------------------------------------------------------------
+
+# メインキー (後期型)
+#
+
+[MAINKEY]	True	640	205
+
+KEYTOP_ESC		NO	 35	 20
+KEYTOP_1		NO	 80	 20
+KEYTOP_2		NO	120	 20
+KEYTOP_3		NO	160	 20
+KEYTOP_4		NO	200	 20
+KEYTOP_5		NO	240	 20
+KEYTOP_6		NO	280	 20
+KEYTOP_7		NO	320	 20
+KEYTOP_8		NO	360	 20
+KEYTOP_9		NO	400	 20
+KEYTOP_0		NO	440	 20
+KEYTOP_MINUS		NO	480	 20
+KEYTOP_CARET		NO	520	 20
+KEYTOP_YEN		NO	560	 20
+KEYTOP_BS		NO	605	 20
+
+KEYTOP_TAB		NO	 45	 60
+KEYTOP_Q		NO	100	 60
+KEYTOP_W		NO	140	 60
+KEYTOP_E		NO	180	 60
+KEYTOP_R		NO	220	 60
+KEYTOP_T		NO	260	 60
+KEYTOP_Y		NO	300	 60
+KEYTOP_U		NO	340	 60
+KEYTOP_I		NO	380	 60
+KEYTOP_O		NO	420	 60
+KEYTOP_P		NO	460	 60
+KEYTOP_AT		NO	500	 60
+KEYTOP_BRACKETLEFT	NO	540	 60
+KEYTOP_RETURNL		NO	600	 80
+
+KEYTOP_CTRL		DOUBLE	 30	100
+KEYTOP_CAPS		SINGLE	 70	100
+KEYTOP_A		NO	110	100
+KEYTOP_S		NO	150	100
+KEYTOP_D		NO	190	100
+KEYTOP_F		NO	230	100
+KEYTOP_G		NO	270	100
+KEYTOP_H		NO	310	100
+KEYTOP_J		NO	350	100
+KEYTOP_K		NO	390	100
+KEYTOP_L		NO	430	100
+KEYTOP_SEMICOLON	NO	470	100
+KEYTOP_COLON		NO	510	100
+KEYTOP_BRACKETRIGHT	NO	550	100
+
+KEYTOP_SHIFTL		DOUBLE	 60	140
+KEYTOP_Z		NO	130	140
+KEYTOP_X		NO	170	140
+KEYTOP_C		NO	210	140
+KEYTOP_V		NO	250	140
+KEYTOP_B		NO	290	140
+KEYTOP_N		NO	330	140
+KEYTOP_M		NO	370	140
+KEYTOP_COMMA		NO	410	140
+KEYTOP_PERIOD		NO	450	140
+KEYTOP_SLASH		NO	490	140
+KEYTOP_UNDERSCORE	NO	530	140
+KEYTOP_SHIFTR		DOUBLE	590	140
+
+KEYTOP_ROMAJI		SINGLE	 30	180
+KEYTOP_KANA		SINGLE	 90	180
+KEYTOP_GRAPH		DOUBLE	130	180
+KEYTOP_KETTEI		NO	190	180
+KEYTOP_SPACE		NO	280	180
+KEYTOP_HENKAN		NO	380	180
+KEYTOP_PC		NO	450	180
+KEYTOP_ZENKAKU		NO	490	180
+KEYTOP_NUM		SINGLE	530	180
+KEYTOP_PREV		NO	570	180
+KEYTOP_NEXT		NO	610	180
+
+
+#----------------------------------------------------------------------
+
+# テンキー&ファンクションキー
+#
+
+[TENKEY]	True	640	205
+
+KEYTOP_STOP		NO	 30	 20
+KEYTOP_F1		NO	 90	 20
+KEYTOP_F2		NO	140	 20
+KEYTOP_F3		NO	190	 20
+KEYTOP_F4		NO	240	 20
+KEYTOP_F5		NO	290	 20
+KEYTOP_ROLLUP		NO	380	 20
+KEYTOP_ROLLDOWN		NO	420	 20
+KEYTOP_HOME		NO	490	 20
+KEYTOP_HELP		NO	530	 20
+KEYTOP_KP_SUB		NO	570	 20
+KEYTOP_KP_DIVIDE	NO	610	 20
+
+KEYTOP_COPY		NO	 30	 60
+KEYTOP_F6		NO	 90	 60
+KEYTOP_F7		NO	140	 60
+KEYTOP_F8		NO	190	 60
+KEYTOP_F9		NO	240	 60
+KEYTOP_F10		NO	290	 60
+KEYTOP_INS		NO	380	 60
+KEYTOP_DEL		NO	420	 60
+KEYTOP_KP_7		NO	490	 60
+KEYTOP_KP_8		NO	530	 60
+KEYTOP_KP_9		NO	570	 60
+KEYTOP_KP_MULTIPLY	NO	610	 60
+
+KEYTOP_ESC_PAD		NO	 40	100	# size 56x36
+KEYTOP_SHIFT_PAD	NO	100	100	# size 56x36
+KEYTOP_KP_4		NO	490	100
+KEYTOP_KP_5		NO	530	100
+KEYTOP_KP_6		NO	570	100
+KEYTOP_KP_ADD		NO	610	100
+
+KEYTOP_SPACE_PAD	NO	 40	140	# size 56x36
+KEYTOP_RETURN_PAD	NO	100	140	# size 56x36
+KEYTOP_UP		NO	400	140
+KEYTOP_KP_1		NO	490	140
+KEYTOP_KP_2		NO	530	140
+KEYTOP_KP_3		NO	570	140
+KEYTOP_KP_EQUAL		NO	610	140
+
+KEYTOP_Z_PAD		NO	 40	180	# size 56x36
+KEYTOP_X_PAD		NO	100	180	# size 56x36
+KEYTOP_LEFT		NO	360	180
+KEYTOP_DOWN		NO	400	180
+KEYTOP_RIGHT		NO	440	180
+KEYTOP_KP_0		NO	490	180
+KEYTOP_KP_COMMA		NO	530	180
+KEYTOP_KP_PERIOD	NO	570	180
+KEYTOP_RETURNR		NO	610	180
+
+KEYTOP_PREV		NO	255	180
+KEYTOP_NEXT		NO	295	180
+
+
+#----------------------------------------------------------------------
+
+# ゲーム用キー		幅サイズを大きくすると、相対的にキーが小さくなります。
+#			16:9モニターなら、 1024 125 ぐらいでもいいかも。
+
+[GAMEKEY]	True	640	125
+
+KEYTOP_8_4		NO	  30	 20	# size 36x36
+KEYTOP_KP_8		NO	  70	 20	# size 36x36
+KEYTOP_8_6		NO	 110	 20	# size 36x36
+KEYTOP_ESC_PAD		NO	-100	 20	# size 56x36
+KEYTOP_SHIFT_PAD	NO	 -40	 20	# size 56x36
+
+KEYTOP_KP_4		NO	  30	 60	# size 36x36
+KEYTOP_KP_6		NO	 110	 60	# size 36x36
+KEYTOP_SPACE_PAD	NO	-100	 60	# size 56x36
+KEYTOP_RETURN_PAD	NO	 -40	 60	# size 56x36
+
+KEYTOP_2_4		NO	  30	100	# size 36x36
+KEYTOP_KP_2		NO	  70	100	# size 36x36
+KEYTOP_2_6		NO	 110	100	# size 36x36
+KEYTOP_X_PAD		NO	-100	100	# size 56x36
+KEYTOP_Z_PAD		NO	 -40	100	# size 56x36
+
+KEYTOP_PREV		NO	255	100
+KEYTOP_NEXT		NO	295	100
+
+
+#----------------------------------------------------------------------
+
+# 麻雀ゲーム用キー      というか、ぎゅわんぶらあ自己中心派用。
+#                       16:9モニターに合わせたので、それ以外は微調整が必要。
+
+[MAHJONGKEY]	True	1060	160
+
+KEYTOP_A		NO	330	140
+KEYTOP_B		NO	370	140
+KEYTOP_C		NO	410	140
+KEYTOP_D		NO	450	140
+KEYTOP_E		NO	490	140
+KEYTOP_F		NO	530	140
+KEYTOP_G		NO	570	140
+KEYTOP_H		NO	610	140
+KEYTOP_I		NO	650	140
+KEYTOP_J		NO	690	140
+KEYTOP_K		NO	730	140
+KEYTOP_L		NO	770	140
+KEYTOP_M		NO	810	140
+KEYTOP_N		NO	850	140
+KEYTOP_Y		NO	950	140
+
+KEYTOP_SHIFT_MINI	DOUBLE	315	 20	# size 36x36
+KEYTOP_F1		NO	370	 20
+KEYTOP_F2		NO	420	 20
+KEYTOP_F3		NO	470	 20
+KEYTOP_F4		NO	520	 20
+KEYTOP_F5		NO	570	 20
+KEYTOP_RETURN_PAD	NO	640	 20
+KEYTOP_SPACE_PAD	NO	710	 20
+KEYTOP_KP_4		NO	780	 20
+KEYTOP_KP_2		NO	820	 20
+KEYTOP_KP_8		NO	860	 20
+KEYTOP_KP_6		NO	900	 20
+KEYTOP_1		NO	950	 20
+
+KEYTOP_PREV		NO	140	140
+KEYTOP_NEXT		NO	180	140
+
+
+#----------------------------------------------------------------------
