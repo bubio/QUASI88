@@ -7,17 +7,17 @@ on:
       - main
     paths-ignore:
       - '*.md'
-      - 'Documents/**'
+      - 'doc/**'
   pull_request:
     types: [opened, synchronize]
     paths-ignore:
       - '*.md'
-      - 'Documents/**'
+      - 'doc/**'
   release:
     types: [published]
     paths-ignore:
       - '*.md'
-      - 'Documents/**'
+      - 'doc/**'
   workflow_dispatch:
 
 concurrency:

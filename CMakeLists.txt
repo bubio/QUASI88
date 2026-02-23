@@ -226,7 +226,7 @@ if(APPLE OR UNIX)
         "ROM_DIR=\"~/Library/Application Support/quasi88/rom/\""
         "DISK_DIR=\"~/\""
         "TAPE_DIR=\"~/\""
-        "SNAP_DIR=\"~/Pictures/QUASI88/\""
+        "SNAP_DIR=\"~/Pictures/quasi88/\""
         "STATE_DIR=\"~/Library/Application Support/quasi88/state/\""
         "L_CFG_DIR=\"~/Library/Application Support/quasi88/rc/\""
         "G_CFG_DIR=\"~/Library/Application Support/quasi88/\""
@@ -271,13 +271,23 @@ install(TARGETS quasi88
     RUNTIME DESTINATION bin
 )
 
-# Install resource files
-install(FILES
-    keyconf.rc
-    quasi88.rc
-    touchkey.rc
-    DESTINATION share/quasi88
-)
+# Install resource files for macOS bundle
+if(APPLE)
+    install(FILES
+        keyconf.rc
+        quasi88.rc
+        touchkey.rc
+        DESTINATION "Resources/share/quasi88"
+    )
+else()
+    # Install resource files for non-macOS platforms
+    install(FILES
+        keyconf.rc
+        quasi88.rc
+        touchkey.rc
+        DESTINATION share/quasi88
+    )
+endif()
 
 # CPack
 set(CPACK_PACKAGE_NAME "QUASI88")
