@@ -799,6 +799,7 @@ int osd_file_stat(const char *pathname) {
  ****************************************************************************/
 static int parse_tilda(const char *home, const char *path, char *result_path,
                        int result_size);
+static int make_dir_p(const char *path);         
 static int make_dir(const char *dname);
 
 int osd_file_config_init(void) {
@@ -846,42 +847,42 @@ int osd_file_config_init(void) {
 
     /* $(HOME)/.quasi88/以下のディレクトリを作成 */
 
-#define HOME_QUASI88 "/.quasi88"
-#define HOME_QUASI88_RC "/.quasi88/rc"
-#define HOME_QUASI88_STATE "/.quasi88/state"
+// #define HOME_QUASI88 "/.quasi88"
+// #define HOME_QUASI88_RC "/.quasi88/rc"
+// #define HOME_QUASI88_STATE "/.quasi88/state"
 
-    s = malloc(strlen(home) + sizeof(HOME_QUASI88) + 1);
-    if (s) {
-      sprintf(s, "%s%s", home, HOME_QUASI88);
+//     s = malloc(strlen(home) + sizeof(HOME_QUASI88) + 1);
+//     if (s) {
+//       sprintf(s, "%s%s", home, HOME_QUASI88);
 
-      if (make_dir(s)) {
-        g_cfg = s;
-      } else {
-        free(s);
-      }
-    }
+//       if (make_dir(s)) {
+//         g_cfg = s;
+//       } else {
+//         free(s);
+//       }
+//     }
 
-    s = malloc(strlen(home) + sizeof(HOME_QUASI88_RC) + 1);
-    if (s) {
-      sprintf(s, "%s%s", home, HOME_QUASI88_RC);
+//     s = malloc(strlen(home) + sizeof(HOME_QUASI88_RC) + 1);
+//     if (s) {
+//       sprintf(s, "%s%s", home, HOME_QUASI88_RC);
 
-      if (make_dir(s)) {
-        l_cfg = s;
-      } else {
-        free(s);
-      }
-    }
+//       if (make_dir(s)) {
+//         l_cfg = s;
+//       } else {
+//         free(s);
+//       }
+//     }
 
-    s = malloc(strlen(home) + sizeof(HOME_QUASI88_STATE) + 1);
-    if (s) {
-      sprintf(s, "%s%s", home, HOME_QUASI88_STATE);
+//     s = malloc(strlen(home) + sizeof(HOME_QUASI88_STATE) + 1);
+//     if (s) {
+//       sprintf(s, "%s%s", home, HOME_QUASI88_STATE);
 
-      if (make_dir(s)) {
-        state = s;
-      } else {
-        free(s);
-      }
-    }
+//       if (make_dir(s)) {
+//         state = s;
+//       } else {
+//         free(s);
+//       }
+//     }
   }
 
   /* ROMディレクトリを設定する */
@@ -895,6 +896,7 @@ int osd_file_config_init(void) {
       strcpy(dir_rom, dir_cwd);
     }
   }
+  make_dir_p(dir_rom);
 
   /* DISKディレクトリを設定する */
 
@@ -907,6 +909,7 @@ int osd_file_config_init(void) {
       strcpy(dir_disk, dir_cwd);
     }
   }
+  make_dir_p(dir_disk);
 
   /* TAPEディレクトリを設定する */
 
@@ -919,6 +922,7 @@ int osd_file_config_init(void) {
       strcpy(dir_tape, dir_cwd);
     }
   }
+  make_dir_p(dir_tape);
 
   /* SNAPディレクトリを設定する */
 
@@ -933,6 +937,7 @@ int osd_file_config_init(void) {
       strcpy(dir_snap, dir_cwd);
     }
   }
+  make_dir_p(dir_snap);
 
   /* STATEディレクトリを設定する */
 
@@ -951,6 +956,7 @@ int osd_file_config_init(void) {
       }
     }
   }
+  make_dir_p(dir_state);
 
   /* 全体設定ディレクトリを設定する */
 
@@ -964,6 +970,7 @@ int osd_file_config_init(void) {
       strcpy(dir_g_cfg, "");
     }
   }
+  make_dir_p(dir_g_cfg);
 
   /* 個別設定ディレクトリを設定する */
 
@@ -977,6 +984,7 @@ int osd_file_config_init(void) {
       strcpy(dir_l_cfg, "");
     }
   }
+  make_dir_p(dir_l_cfg);
 
   if (g_cfg) {
     free(g_cfg);
@@ -1058,6 +1066,47 @@ static int parse_tilda(const char *home, const char *path, char *result_path,
     }
   }
 }
+
+static int make_dir_p(const char *path)
+{
+    char tmp[OSD_MAX_FILENAME];
+    char *p = NULL;
+    size_t len;
+
+    snprintf(tmp, sizeof(tmp), "%s", path);
+    len = strlen(tmp);
+
+    // 末尾の / を削除
+    if (tmp[len - 1] == '/')
+        tmp[len - 1] = '\0';
+
+    // 途中のディレクトリを順番に作る
+    for (p = tmp + 1; *p; p++)
+    {
+        if (*p == '/')
+        {
+            *p = '\0';
+
+            if (make_dir(tmp) != TRUE)
+            {
+                if (errno != EEXIST)
+                    return -1;
+            }
+
+            *p = '/';
+        }
+    }
+
+    // 最後のディレクトリ
+    if (make_dir(tmp) != TRUE)
+    {
+        if (errno != EEXIST)
+            return -1;
+    }
+
+    return 0;
+}
+
 
 /*
  * ディレクトリ dname があるかチェック。無ければ作る。
