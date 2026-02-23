@@ -223,13 +223,13 @@ target_compile_definitions(quasi88 PRIVATE
 
 if(APPLE OR UNIX)
     target_compile_definitions(quasi88 PRIVATE
-        "ROM_DIR=\"~/quasi88/rom/\""
-        "DISK_DIR=\"~/quasi88/disk/\""
-        "TAPE_DIR=\"~/quasi88/tape/\""
-        "SNAP_DIR=\"\""
-        "STATE_DIR=\"\""
-        "L_CFG_DIR=\"\""
-        "G_CFG_DIR=\"\""
+        "ROM_DIR=\"~/Library/Application Support/quasi88/rom/\""
+        "DISK_DIR=\"~/\""
+        "TAPE_DIR=\"~/\""
+        "SNAP_DIR=\"~/Pictures/QUASI88/\""
+        "STATE_DIR=\"~/Library/Application Support/quasi88/state/\""
+        "L_CFG_DIR=\"~/Library/Application Support/quasi88/rc/\""
+        "G_CFG_DIR=\"~/Library/Application Support/quasi88/\""
     )
 endif()
 
