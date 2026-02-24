@@ -91,6 +91,16 @@ QUASI88 uses CMake for its build system.
     cpack --config build/CPackConfig.cmake -G DragNDrop -B build
     ```
 
+### Installation (Release DMG)
+
+Download the DMG from [Releases](https://github.com/bubio/QUASI88/releases) and copy `QUASI88.app` to `/Applications`.
+
+Since the app is not code-signed, macOS Gatekeeper may report it as "damaged". Run the following command to remove the quarantine attribute:
+
+```bash
+xattr -cr /Applications/QUASI88.app
+```
+
 ## Usage
 
 ### ROM Images
