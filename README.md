@@ -84,9 +84,9 @@ QUASI88 uses CMake for its build system.
     cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release
     cmake --build build
     ```
-    `build/QUASI88.app` が生成されます。
+    This will generate `build/QUASI88.app`.
 
-3.  **DMG パッケージの作成 (optional):**
+3.  **Create a DMG package (optional):**
     ```bash
     cpack --config build/CPackConfig.cmake -G DragNDrop -B build
     ```
@@ -133,13 +133,13 @@ You can place your disk and tape images in the respective default directories or
 
 ### Running the Emulator
 
-`QUASI88.app` をダブルクリックするか、ターミナルから起動できます:
+Double-click `QUASI88.app` or launch it from the terminal:
 
 ```bash
 open build/QUASI88.app
 ```
 
-ディスクイメージを指定して起動する場合:
+To specify a disk image:
 
 ```bash
 build/QUASI88.app/Contents/MacOS/QUASI88 [options] [disk_image.d88]
