@@ -280,17 +280,11 @@ if(MSVC)
 endif()
 # Optimization flags are handled by CMAKE_BUILD_TYPE (e.g. -O2 for Release, -g for Debug)
 
-# Installation Rules
-include(GNUInstallDirs)
+# Installation
 install(TARGETS QUASI88
-    # macOS は .app バンドルとしてルートに配置
-    BUNDLE DESTINATION "$<$<BOOL:${APPLE}>:.>"
-    # Windows は exe をインストールルートの直下に配置
-    # Linux は標準の bin ディレクトリに配置
-    RUNTIME DESTINATION "$<$<AND:$<BOOL:${WIN32}>,$<NOT:$<BOOL:${APPLE}>>>:.>$<$<NOT:$<BOOL:${WIN32}>>:$<IF:$<BOOL:${APPLE}>,.,${CMAKE_INSTALL_BINDIR}>>"
+    BUNDLE DESTINATION .
+    RUNTIME DESTINATION bin
 )
-
-
 # CPack
 set(CPACK_PACKAGE_NAME "QUASI88")
 set(CPACK_PACKAGE_VENDOR "bubio")
