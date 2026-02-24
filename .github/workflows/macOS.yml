@@ -1,4 +1,4 @@
-name: macOS Build Universal
+name: macOS Build
 
 on:
   push:
@@ -37,33 +37,26 @@ jobs:
         with:
           xcode-version: '26.2'
 
-      - name: Install SDL2 (Universal Framework)
-        run: |
-          curl -L https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.dmg -o SDL2.dmg
-          hdiutil attach SDL2.dmg
-          sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/
-          hdiutil detach /Volumes/SDL2
+      - name: Install SDL2
+        run: brew install sdl2
 
       - name: Build QUASI88 macOS app
         run: |
-          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON \
-            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
-            -DSDL2_INCLUDE_DIR=/Library/Frameworks/SDL2.framework/Headers \
-            -DSDL2_LIBRARY=/Library/Frameworks/SDL2.framework
+          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON
           cmake --build build --config Release
           cpack --config build/CPackConfig.cmake -G DragNDrop -B build
           dmg_file=$(ls build/*.dmg | head -n 1)
-          mv "$dmg_file" build/QUASI88_macOS_Universal.dmg
+          mv "$dmg_file" build/QUASI88_macOS.dmg
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QUASI88_macOS_Universal.dmg
-          path: build/QUASI88_macOS_Universal.dmg
+          name: QUASI88_macOS.dmg
+          path: build/QUASI88_macOS.dmg
 
       - name: Update Release
         if: ${{ github.event_name == 'release' && !env.ACT }}
         uses: svenstaro/upload-release-action@v2
         with:
-          file: build/QUASI88_macOS_Universal.dmg
+          file: build/QUASI88_macOS.dmg
           overwrite: true

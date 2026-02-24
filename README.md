@@ -53,9 +53,7 @@ The emulator's compatibility is generally good, running 70-90% of applications. 
 
 ## Supported Platforms
 
-*   **Windows**
-*   **macOS** (Universal a.k.a. x86_64 and arm64)
-*   **Linux**
+*   **macOS** (arm64)
 
 ## Getting Started
 
@@ -63,15 +61,13 @@ The emulator's compatibility is generally good, running 70-90% of applications. 
 
 Before you can build QUASI88, you need the following tools and libraries:
 
-*   **A C/C++ compiler** (e.g., GCC, Clang, Visual Studio C++ with C++ development workload)
+*   **Xcode Command Line Tools** (or Xcode)
 *   **CMake** (version 3.10 or later)
 *   **SDL2 development library** (version 2.0.0 or later)
 
-**SDL2 Installation Examples:**
-
-*   **macOS (Homebrew):** `brew install sdl2`
-*   **Linux (Debian/Ubuntu):** `sudo apt-get install libsdl2-dev`
-*   **Windows:** Download the development library from the [SDL website](https://www.libsdl.org/) and place the `include` and `lib` folders into a `visualc/SDL2` directory within the project, or use a package manager like `vcpkg`. Additionally, for Windows, you might need the Visual C++ Redistributable Package if `VCRUNTIME140.dll` is not found.
+```bash
+brew install cmake sdl2
+```
 
 ### Building
 
@@ -79,41 +75,21 @@ QUASI88 uses CMake for its build system.
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/quasi88.git
-    cd quasi88
+    git clone https://github.com/bubio/QUASI88.git
+    cd QUASI88
     ```
 
-2.  **Create a build directory:**
+2.  **Configure and build:**
     ```bash
-    mkdir build
-    cd build
+    cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release
+    cmake --build build
     ```
+    `build/QUASI88.app` が生成されます。
 
-3.  **Configure and build the project:**
-
-    **For macOS and Linux:**
+3.  **DMG パッケージの作成 (optional):**
     ```bash
-    cmake ..
-    make
+    cpack --config build/CPackConfig.cmake -G DragNDrop -B build
     ```
-    This will generate a `quasi88` executable in the build directory.
-
-    **For Windows (using Visual Studio):**
-    Open a developer command prompt and run:
-    ```bash
-    cmake ..
-    cmake --build . --config Release
-    ```
-    Alternatively, you can open the generated `QUASI88.sln` file in Visual Studio and build the project from there. The executable will typically be in the `build/Release` directory.
-
-### Installation
-
-After building, you can install the executable and resource files to your system (optional):
-
-```bash
-make install
-```
-This will typically install to `/usr/local/bin` on Unix-like systems. You can change the install prefix by configuring CMake with `-DCMAKE_INSTALL_PREFIX=/path/to/install`.
 
 ## Usage
 
@@ -147,17 +123,17 @@ You can place your disk and tape images in the respective default directories or
 
 ### Running the Emulator
 
-You can launch QUASI88 from your terminal. If you've built it in the `build` directory, navigate there and execute:
+`QUASI88.app` をダブルクリックするか、ターミナルから起動できます:
 
 ```bash
-./quasi88 [options] [disk_image.d88]
+open build/QUASI88.app
 ```
 
-**Examples:**
+ディスクイメージを指定して起動する場合:
 
-*   `./quasi88` - Starts the emulator with ROM BASIC.
-*   `./quasi88 game.d88` - Starts the emulator and loads `game.d88` into Drive 1.
-*   `./quasi88 game.d88 2 4` - Loads the 2nd image of `game.d88` into Drive 1 and the 4th image into Drive 2.
+```bash
+build/QUASI88.app/Contents/MacOS/QUASI88 [options] [disk_image.d88]
+```
 
 For a complete list of command-line options and their usage, please consult `doc/manual.txt`.
 
@@ -201,18 +177,14 @@ You can customize key assignments using command-line options (`-f6` to `-f10`) o
 QUASI88 reads various configuration files to customize its behavior.
 
 *   **Global Configuration File**: Contains general emulator settings.
-    *   **Unix-like:** `~/.quasi88/quasi88.rc`
-    *   **Windows:** `QUASI88.ini` (in the same directory as the executable)
+    *   `~/Library/Application Support/quasi88/quasi88.rc`
     *   The format is one option per line, identical to command-line options (e.g., `-frameskip 2`). Comments start with `#`.
 *   **Individual Configuration File**: Loaded if a disk image is specified, allowing per-image settings.
-    *   **Unix-like:** `~/.quasi88/rc/<disk_image_basename>.rc`
-    *   **Windows:** `INI\<disk_image_basename>.ini`
+    *   `~/Library/Application Support/quasi88/rc/<disk_image_basename>.rc`
 *   **Keyboard Configuration File**: Customizes keyboard mappings.
-    *   **Unix-like:** `~/.quasi88/keyconf.rc`
-    *   **Windows:** `KEYCONF.ini`
+    *   `~/Library/Application Support/quasi88/rc/keyconf.rc`
 *   **Touch Key Configuration File**: Customizes the on-screen touch keyboard.
-    *   **Unix-like:** `~/.quasi88/touchkey.rc`
-    *   **Windows:** `TOUCHKEY.ini`
+    *   `~/Library/Application Support/quasi88/rc/touchkey.rc`
 
 Command-line options take precedence over individual config files, which take precedence over global config files.
 
@@ -239,9 +211,9 @@ For detailed instructions on using Menu Mode, refer to `doc/manual.txt`.
 If you encounter issues, here are some common problems and solutions:
 
 *   **Emulator does not start / crashes immediately:**
-    *   Ensure SDL2 is correctly installed and its DLL (`SDL2.dll` on Windows) is accessible.
+    *   Ensure SDL2 is correctly installed (`brew install sdl2`).
     *   Check for error messages when launching with `-verbose 1` (add this to `quasi88.rc` or as a command-line option).
-    *   Try deleting your configuration files (`quasi88.rc`/`QUASI88.ini`) to reset settings.
+    *   Try deleting your configuration files (`quasi88.rc`) to reset settings.
 *   **Black screen after launch:**
     *   Verify your ROM images are present in the correct directory and are readable. Use `-verbose 1` to check for ROM loading errors.
 *   **Corrupted display:**
@@ -256,7 +228,7 @@ If you encounter issues, here are some common problems and solutions:
 *   **Slow performance:**
     *   QUASI88 is resource-intensive. Consider options like `-autoskip`, `-frameskip`, `-half`, `-nowait` to improve speed. Refer to `doc/faq.txt` for detailed optimization tips.
 *   **Persistent key presses / auto-repeat issues:**
-    *   If a key is stuck, press and release it again, or enter Menu Mode (which clears most key states). For persistent auto-repeat issues after closing QUASI88, you might need to manually reset (`xset r on` on X11 systems).
+    *   If a key is stuck, press and release it again, or enter Menu Mode (which clears most key states).
 
 For a comprehensive list of FAQs and troubleshooting tips, please refer to `doc/faq.txt`.
 

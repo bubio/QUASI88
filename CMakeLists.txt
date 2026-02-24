@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 project(QUASI88 VERSION 0.7.3 LANGUAGES C CXX)
 
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS deployment target" FORCE)
+endif()
+
 # Options
 option(USE_SOUND "Enable sound engine" ON)
 option(USE_FMGEN "Enable fmgen (FM Sound Generator)" ON)
@@ -281,7 +285,6 @@ install(TARGETS QUASI88
     BUNDLE DESTINATION .
     RUNTIME DESTINATION bin
 )
-
 # CPack
 set(CPACK_PACKAGE_NAME "QUASI88")
 set(CPACK_PACKAGE_VENDOR "bubio")
