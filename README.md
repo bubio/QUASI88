@@ -1,6 +1,12 @@
 # QUASI88
 
 <p align="center">
+  <img src="AppIcon.png" alt="QUASI88" width="128" height="128">
+</p>
+
+This is a macOS build of QUASI88 (https://www.eonet.ne.jp/~showtime/quasi88/).
+
+<p align="center">
   <a href="https://github.com/bubio/QUASI88/releases/latest">
     <img src="https://img.shields.io/github/v/release/bubio/QUASI88" alt="Latest Release">
   </a>
@@ -12,7 +18,6 @@
   </a>
 </p>
 
-This is a macOS build of QUASI88 (https://www.eonet.ne.jp/~showtime/quasi88/).
 
 QUASI88 is a PC-8801 emulator that allows you to run software for the classic Japanese 8-bit computer on modern systems. It aims to accurately reproduce the PC-8801mkIISR and later models, with support for various features like sound, graphics, and peripherals.
 
