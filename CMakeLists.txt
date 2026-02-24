@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 project(QUASI88 VERSION 0.7.3 LANGUAGES C CXX)
 
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS deployment target" FORCE)
+endif()
+
 # Options
 option(USE_SOUND "Enable sound engine" ON)
 option(USE_FMGEN "Enable fmgen (FM Sound Generator)" ON)
@@ -276,11 +280,16 @@ if(MSVC)
 endif()
 # Optimization flags are handled by CMAKE_BUILD_TYPE (e.g. -O2 for Release, -g for Debug)
 
-# Installation
+# Installation Rules
+include(GNUInstallDirs)
 install(TARGETS QUASI88
-    BUNDLE DESTINATION .
-    RUNTIME DESTINATION bin
+    # macOS は .app バンドルとしてルートに配置
+    BUNDLE DESTINATION "$<$<BOOL:${APPLE}>:.>"
+    # Windows は exe をインストールルートの直下に配置
+    # Linux は標準の bin ディレクトリに配置
+    RUNTIME DESTINATION "$<$<AND:$<BOOL:${WIN32}>,$<NOT:$<BOOL:${APPLE}>>>:.>$<$<NOT:$<BOOL:${WIN32}>>:$<IF:$<BOOL:${APPLE}>,.,${CMAKE_INSTALL_BINDIR}>>"
 )
+
 
 # CPack
 set(CPACK_PACKAGE_NAME "QUASI88")
