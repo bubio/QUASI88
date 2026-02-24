@@ -318,7 +318,7 @@ const T_GRAPH_INFO *graph_setup(int width, int height,
 									 ICON_SIZE * sizeof(Uint32),
 									 0x00ff0000, 0x0000ff00, 0x000000ff,
 									 0xff000000);
-		SDL_WM_SetIcon(icon_surface, NULL);
+		// SDL_WM_SetIcon(icon_surface, NULL);
 		SDL_FreeSurface(icon_surface);
 	}
 #endif
