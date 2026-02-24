@@ -39,7 +39,7 @@ jobs:
 
       - name: Install SDL2 (Universal Framework)
         run: |
-          curl -L https://github.com/libsdl-org/SDL/releases/download/release-2.30.11/SDL2-2.30.11.dmg -o SDL2.dmg
+          curl -L https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.dmg -o SDL2.dmg
           hdiutil attach SDL2.dmg
           sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/
           hdiutil detach /Volumes/SDL2

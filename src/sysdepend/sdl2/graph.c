@@ -603,7 +603,7 @@ void sdl2_set_icon(SDL_Window *window)
 										 ICON_SIZE * sizeof(Uint32),
 										 0x00ff0000, 0x0000ff00, 0x000000ff,
 										 0xff000000);
-			SDL_SetWindowIcon(window, icon_surface);
+			// SDL_SetWindowIcon(window, icon_surface);
 			SDL_FreeSurface(icon_surface);
 		}
 #endif

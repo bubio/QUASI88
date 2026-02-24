@@ -198,23 +198,34 @@ if(USE_SOUND)
 endif()
 
 # Executable
-add_executable(quasi88 ${SOURCES})
+add_executable(QUASI88 ${SOURCES})
 
 if(APPLE)
-    set_target_properties(quasi88 PROPERTIES
+    set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/AppIcon.png")
+
+    set_target_properties(QUASI88 PROPERTIES
         MACOSX_BUNDLE TRUE
-        MACOSX_BUNDLE_GUI_IDENTIFIER "com.quasi88.emulator"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.bubio.quasi88"
         MACOSX_BUNDLE_BUNDLE_NAME "QUASI88"
+        MACOSX_BUNDLE_DISPLAY_NAME "QUASI88"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "0.6.4"
-        MACOSX_BUNDLE_BUNDLE_VERSION "0.6.4"
+        MACOSX_BUNDLE_BUNDLE_VERSION "1"
+        MACOSX_BUNDLE_ICON_FILE "AppIcon.png"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
     )
+
+    set_source_files_properties(${APP_ICON} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
+    )
+
+    target_sources(QUASI88 PRIVATE ${APP_ICON})
 endif()
 
 # Target Include Directories
-target_include_directories(quasi88 PRIVATE ${INCDIRS})
+target_include_directories(QUASI88 PRIVATE ${INCDIRS})
 
 # Target Compilation Definitions
-target_compile_definitions(quasi88 PRIVATE
+target_compile_definitions(QUASI88 PRIVATE
     QUASI88_SDL2
     HAVE_INTPTR_T
     "INLINE=static __inline__"
@@ -222,7 +233,7 @@ target_compile_definitions(quasi88 PRIVATE
 )
 
 if(APPLE OR UNIX)
-    target_compile_definitions(quasi88 PRIVATE
+    target_compile_definitions(QUASI88 PRIVATE
         "ROM_DIR=\"~/Library/Application Support/quasi88/rom/\""
         "DISK_DIR=\"~/\""
         "TAPE_DIR=\"~/\""
@@ -234,65 +245,47 @@ if(APPLE OR UNIX)
 endif()
 
 if(SUPPORT_DOUBLE)
-    target_compile_definitions(quasi88 PRIVATE SUPPORT_DOUBLE)
+    target_compile_definitions(QUASI88 PRIVATE SUPPORT_DOUBLE)
 endif()
 if(USE_MONITOR)
-    target_compile_definitions(quasi88 PRIVATE USE_MONITOR)
+    target_compile_definitions(QUASI88 PRIVATE USE_MONITOR)
 endif()
 if(USE_SOUND)
-    target_compile_definitions(quasi88 PRIVATE USE_SOUND "PI=M_PI" SYSDEP_DSP_SDL)
+    target_compile_definitions(QUASI88 PRIVATE USE_SOUND "PI=M_PI" SYSDEP_DSP_SDL)
     if(USE_FMGEN)
-        target_compile_definitions(quasi88 PRIVATE USE_FMGEN)
+        target_compile_definitions(QUASI88 PRIVATE USE_FMGEN)
     endif()
 endif()
 
 # Link Libraries
 if(APPLE)
-    target_link_libraries(quasi88 PRIVATE SDL2::SDL2 "-framework Cocoa")
+    target_link_libraries(QUASI88 PRIVATE SDL2::SDL2 "-framework Cocoa")
 elseif(WIN32)
-    target_link_libraries(quasi88 PRIVATE SDL2::SDL2 SDL2::SDL2main)
+    target_link_libraries(QUASI88 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 else()
-    target_link_libraries(quasi88 PRIVATE SDL2::SDL2)
+    target_link_libraries(QUASI88 PRIVATE SDL2::SDL2)
 endif()
 
 if(UNIX)
-    target_link_libraries(quasi88 PRIVATE m)
+    target_link_libraries(QUASI88 PRIVATE m)
 endif()
 
 # Compiler-specific options
 if(MSVC)
-    target_compile_options(quasi88 PRIVATE /utf-8)
+    target_compile_options(QUASI88 PRIVATE /utf-8)
 endif()
 # Optimization flags are handled by CMAKE_BUILD_TYPE (e.g. -O2 for Release, -g for Debug)
 
 # Installation
-install(TARGETS quasi88
+install(TARGETS QUASI88
     BUNDLE DESTINATION .
     RUNTIME DESTINATION bin
 )
 
-# Install resource files for macOS bundle
-if(APPLE)
-    install(FILES
-        keyconf.rc
-        quasi88.rc
-        touchkey.rc
-        DESTINATION "Resources/share/quasi88"
-    )
-else()
-    # Install resource files for non-macOS platforms
-    install(FILES
-        keyconf.rc
-        quasi88.rc
-        touchkey.rc
-        DESTINATION share/quasi88
-    )
-endif()
-
 # CPack
 set(CPACK_PACKAGE_NAME "QUASI88")
-set(CPACK_PACKAGE_VENDOR "QUASI88 Team")
-set(CPACK_PACKAGE_VERSION "0.6.4")
+set(CPACK_PACKAGE_VENDOR "bubio")
+set(CPACK_PACKAGE_VERSION "0.7.3")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "PC-8801 Emulator")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 
@@ -302,7 +295,7 @@ elseif(WIN32)
     set(CPACK_GENERATOR "NSIS;ZIP")
 else()
     set(CPACK_GENERATOR "DEB;RPM;TGZ")
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "QUASI88 Team")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "bubio")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsdl2-2.0-0")
 endif()
 
