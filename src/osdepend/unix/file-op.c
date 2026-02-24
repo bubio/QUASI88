@@ -1107,6 +1107,8 @@ static int make_dir_p(const char *path)
     return 0;
 }
 
+      strcpy(result_path, path);
+      return TRUE;
 
 /*
  * ディレクトリ dname があるかチェック。無ければ作る。
