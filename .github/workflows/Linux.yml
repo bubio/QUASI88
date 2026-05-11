@@ -61,7 +61,7 @@ jobs:
         run: |
           # Prepare AppImage metadata
           mkdir -p build/AppDir/usr/share/applications
-          mkdir -p build/AppDir/usr/share/icons/hicolor/256x256/apps
+          mkdir -p build/AppDir/usr/share/icons/hicolor/scalable/apps
           cat <<EOF > build/AppDir/usr/share/applications/quasi88.desktop
           [Desktop Entry]
           Name=QUASI88
@@ -71,7 +71,7 @@ jobs:
           Categories=Game;Emulator;
           Comment=PC-8801 Emulator
           EOF
-          cp AppIcon.png build/AppDir/usr/share/icons/hicolor/256x256/apps/quasi88.png
+          cp AppIcon.png build/AppDir/usr/share/icons/hicolor/scalable/apps/quasi88.png
           
           # Install and Run linuxdeploy
           cmake --install build --prefix build/AppDir/usr
