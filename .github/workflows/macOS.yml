@@ -46,23 +46,22 @@ jobs:
             -DCPACK=ON
           cmake --build build --config Release
 
+      - name: Package app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/QUASI88.app \
+            build/QUASI88_macOS.zip
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: QUASI88_macOS
-          path: build/QUASI88.app
-
-      - name: Package for Release
-        if: ${{ github.event_name == 'release' && !env.ACT }}
-        run: |
-          cpack --config build/CPackConfig.cmake -G DragNDrop -B build
-          dmg_file=$(ls build/*.dmg | head -n 1)
-          mv "$dmg_file" build/QUASI88_macOS.dmg
+          path: build/QUASI88_macOS.zip
 
       - name: Update Release
         if: ${{ github.event_name == 'release' && !env.ACT }}
         uses: svenstaro/upload-release-action@v2
         with:
-          file: build/QUASI88_macOS.dmg
+          file: build/QUASI88_macOS.zip
           overwrite: true
           tag: ${{ github.ref }}
