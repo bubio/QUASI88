@@ -41,9 +41,7 @@ jobs:
           cmake -S. -Bbuild \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
-            -DSDL2_FRAMEWORK_PATH=$(pwd) \
-            -DSDL2_INCLUDE_DIR=$(pwd)/SDL2.framework/Headers \
-            -DSDL2_LIBRARY=$(pwd)/SDL2.framework \
+            -DCMAKE_FRAMEWORK_PATH=$(pwd) \
             -DMACOSX_STANDALONE_APP_BUNDLE=ON \
             -DCPACK=ON
           cmake --build build --config Release

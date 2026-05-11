@@ -13,7 +13,22 @@ option(USE_MONITOR "Enable monitor mode (debugger)" ON)
 option(MACOSX_STANDALONE_APP_BUNDLE "Generate a portable app bundle on macOS" OFF)
 
 # Find Dependencies
-find_package(SDL2 REQUIRED)
+if(APPLE)
+    # Search for SDL2 framework
+    find_library(SDL2_LIBRARY NAMES SDL2)
+    find_path(SDL2_INCLUDE_DIR NAMES SDL.h PATH_SUFFIXES SDL2)
+    
+    if(SDL2_LIBRARY AND SDL2_INCLUDE_DIR)
+        set(SDL2_FOUND TRUE)
+        add_library(SDL2::SDL2 INTERFACE IMPORTED)
+        target_link_libraries(SDL2::SDL2 INTERFACE "${SDL2_LIBRARY}")
+        target_include_directories(SDL2::SDL2 INTERFACE "${SDL2_INCLUDE_DIR}")
+    else()
+        find_package(SDL2 REQUIRED)
+    endif()
+else()
+    find_package(SDL2 REQUIRED)
+endif()
 
 # Include Directories
 set(SRCDIR src)
@@ -237,7 +252,7 @@ target_compile_definitions(QUASI88 PRIVATE
     "CLIB_DECL="
 )
 
-if(APPLE OR UNIX)
+if(APPLE)
     target_compile_definitions(QUASI88 PRIVATE
         "ROM_DIR=\"~/Library/Application Support/quasi88/rom/\""
         "DISK_DIR=\"~/\""
@@ -246,6 +261,16 @@ if(APPLE OR UNIX)
         "STATE_DIR=\"~/Library/Application Support/quasi88/state/\""
         "L_CFG_DIR=\"~/Library/Application Support/quasi88/rc/\""
         "G_CFG_DIR=\"~/Library/Application Support/quasi88/\""
+    )
+elseif(UNIX)
+    target_compile_definitions(QUASI88 PRIVATE
+        "ROM_DIR=\"~/.local/share/quasi88/rom/\""
+        "DISK_DIR=\"~/\""
+        "TAPE_DIR=\"~/\""
+        "SNAP_DIR=\"~/Pictures/quasi88/\""
+        "STATE_DIR=\"~/.local/share/quasi88/state/\""
+        "L_CFG_DIR=\"~/.config/quasi88/rc/\""
+        "G_CFG_DIR=\"~/.config/quasi88/\""
     )
 endif()
 
