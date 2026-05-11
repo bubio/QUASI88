@@ -143,7 +143,7 @@ list(APPEND INCDIRS ${SYSDEP_DIR})
 # Platform-specific configurations
 if(WIN32)
     set(OSDEP_DIR ${SRCDIR}/osdepend/win)
-    list(APPEND SOURCES ${OSDEP_DIR}/file-op.c)
+    list(APPEND SOURCES ${OSDEP_DIR}/file-op.c ${OSDEP_DIR}/QUASI88.rc)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 else()
     set(OSDEP_DIR ${SRCDIR}/osdepend/unix)
@@ -218,7 +218,11 @@ if(USE_SOUND)
 endif()
 
 # Executable
-add_executable(QUASI88 ${SOURCES})
+if(WIN32)
+    add_executable(QUASI88 WIN32 ${SOURCES})
+else()
+    add_executable(QUASI88 ${SOURCES})
+endif()
 
 if(APPLE)
     set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/AppIcon.png")

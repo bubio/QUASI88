@@ -51,8 +51,8 @@ QUASI88 emulates various components of the PC-8801:
 
 Download the latest version for your platform from the [Releases](https://github.com/bubio/QUASI88/releases) page.
 
+*   **Windows**: Just extract the `.zip` file and double-click **`QUASI88.exe`**. No installation or command line required!
 *   **macOS**: Open the `.dmg` and copy `QUASI88.app` to your Applications folder.
-*   **Windows**: Extract the `.zip` file and run `QUASI88.exe`.
 *   **Linux**: 
     *   **AppImage**: Make the `.AppImage` file executable (`chmod +x`) and run it.
     *   **DEB/RPM**: Use your package manager (e.g., `sudo apt install ./QUASI88.deb`).
