@@ -226,7 +226,7 @@ endif()
 
 if(APPLE)
     set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/AppIcon.png")
-
+if(APPLE)
     set_target_properties(QUASI88 PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_GUI_IDENTIFIER "com.bubio.quasi88"
@@ -236,6 +236,7 @@ if(APPLE)
         MACOSX_BUNDLE_BUNDLE_VERSION "1"
         MACOSX_BUNDLE_ICON_FILE "AppIcon.png"
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
+        INSTALL_RPATH "@executable_path/../Frameworks"
     )
 
     set_source_files_properties(${APP_ICON} PROPERTIES
@@ -244,6 +245,7 @@ if(APPLE)
 
     target_sources(QUASI88 PRIVATE ${APP_ICON})
 endif()
+
 
 # Target Include Directories
 target_include_directories(QUASI88 PRIVATE ${INCDIRS})
@@ -337,7 +339,8 @@ include(CPack)
 if(APPLE AND MACOSX_STANDALONE_APP_BUNDLE)
     install(CODE "
         include(BundleUtilities)
-        fixup_bundle(\${CMAKE_INSTALL_PREFIX}/QUASI88.app \"\" \"\")
+        set(BU_CHMOD_BUNDLE_ITEMS ON)
+        fixup_bundle(\${CMAKE_INSTALL_PREFIX}/QUASI88.app \"\" \"\${CMAKE_CURRENT_SOURCE_DIR}\")
         "
         COMPONENT Runtime)
 endif()

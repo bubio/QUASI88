@@ -39,29 +39,31 @@ jobs:
       - name: Build QUASI88 macOS app
         run: |
           cmake -S. -Bbuild \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
             -DCMAKE_FRAMEWORK_PATH=$(pwd) \
+            -DCMAKE_INSTALL_PREFIX=$(pwd)/dist \
             -DMACOSX_STANDALONE_APP_BUNDLE=ON \
             -DCPACK=ON
           cmake --build build --config Release
+          cmake --install build
 
       - name: Package app
         run: |
           ditto -c -k --sequesterRsrc --keepParent \
-            build/QUASI88.app \
-            build/QUASI88_macOS.zip
+            dist/QUASI88.app \
+            QUASI88_macOS.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: QUASI88_macOS
-          path: build/QUASI88_macOS.zip
+          path: QUASI88_macOS.zip
 
       - name: Update Release
         if: ${{ github.event_name == 'release' && !env.ACT }}
         uses: svenstaro/upload-release-action@v2
         with:
-          file: build/QUASI88_macOS.zip
+          file: QUASI88_macOS.zip
           overwrite: true
           tag: ${{ github.ref }}
