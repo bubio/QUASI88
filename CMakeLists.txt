@@ -11,42 +11,15 @@ option(USE_SOUND "Enable sound engine" ON)
 option(USE_FMGEN "Enable fmgen (FM Sound Generator)" ON)
 option(SUPPORT_DOUBLE "Support double size display" ON)
 option(USE_MONITOR "Enable monitor mode (debugger)" ON)
+option(MACOSX_STANDALONE_APP_BUNDLE "Generate a portable app bundle on macOS" ON)
 
-# --- SDL2 Handling ------------------------------------------------------
+# --- SDL2 Handling (FetchContent for Win/Mac, find_package for Linux) ---
 set(SDL2_VERSION "2.32.10")
 include(FetchContent)
 
-if(WIN32)
-    # Windows: Download pre-built VC development binaries
-    FetchContent_Declare(
-        SDL2_bin
-        URL "https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/SDL2-devel-${SDL2_VERSION}-VC.zip"
-    )
-    FetchContent_MakeAvailable(SDL2_bin)
-    set(SDL2_DIR "${sdl2_bin_SOURCE_DIR}")
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(SDL2_ARCH "x64")
-    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-        set(SDL2_ARCH "x86")
-    else()
-        set(SDL2_ARCH "arm64")
-    endif()
-
-    add_library(SDL2::SDL2 SHARED IMPORTED GLOBAL)
-    set_target_properties(SDL2::SDL2 PROPERTIES
-        IMPORTED_IMPLIB "${SDL2_DIR}/lib/${SDL2_ARCH}/SDL2.lib"
-        IMPORTED_LOCATION "${SDL2_DIR}/lib/${SDL2_ARCH}/SDL2.dll"
-        INTERFACE_INCLUDE_DIRECTORIES "${SDL2_DIR}/include"
-    )
-    add_library(SDL2::SDL2main STATIC IMPORTED GLOBAL)
-    set_target_properties(SDL2::SDL2main PROPERTIES
-        IMPORTED_LOCATION "${SDL2_DIR}/lib/${SDL2_ARCH}/SDL2main.lib"
-    )
-    # Bundle DLL for Windows (installed next to .exe)
-    install(FILES "${SDL2_DIR}/lib/${SDL2_ARCH}/SDL2.dll" DESTINATION bin)
-
-elseif(APPLE)
-    # macOS: Download source and build to ensure architectures and bundling work correctly
+if(WIN32 OR APPLE)
+    # Download source to support all architectures (x64, x86, arm64)
+    message(STATUS "Fetching SDL2 ${SDL2_VERSION} source from GitHub...")
     FetchContent_Declare(
       SDL2
       URL "https://github.com/libsdl-org/SDL/archive/refs/tags/release-${SDL2_VERSION}.tar.gz"
@@ -64,14 +37,20 @@ elseif(APPLE)
         add_library(SDL2::SDL2main ALIAS SDL2main)
     endif()
     
-    # Bundle built SDL2 for macOS
-    install(TARGETS SDL2 DESTINATION QUASI88.app/Contents/Frameworks)
+    # Bundle built SDL2
+    if(WIN32)
+        # For Windows, SDL2 target provides the DLL. We install it to bin.
+        install(TARGETS SDL2 RUNTIME DESTINATION bin)
+    elseif(APPLE)
+        # For macOS, copy the built dynamic library to Frameworks.
+        install(TARGETS SDL2 DESTINATION QUASI88.app/Contents/Frameworks)
+    endif()
 else()
     # Linux: Use system SDL2
     find_package(SDL2 REQUIRED)
 endif()
 
-# Include Directories
+# --- Include Directories ------------------------------------------------
 set(SRCDIR src)
 set(INCDIRS
     ${SRCDIR}
@@ -88,7 +67,7 @@ set(INCDIRS
     ${SRCDIR}/osdepend
 )
 
-# Core Source Files
+# --- Core Source Files --------------------------------------------------
 set(SOURCES
     ${SRCDIR}/alarm.c
     ${SRCDIR}/control.c
