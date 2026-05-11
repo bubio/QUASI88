@@ -3,8 +3,8 @@ name: macOS Build
 on:
   push:
     branches:
-      - dev
       - main
+      - dev
     paths-ignore:
       - '*.md'
       - 'doc/**'
@@ -15,9 +15,6 @@ on:
       - 'doc/**'
   release:
     types: [published]
-    paths-ignore:
-      - '*.md'
-      - 'doc/**'
   workflow_dispatch:
 
 concurrency:
@@ -26,33 +23,43 @@ concurrency:
 
 jobs:
   build-macos:
-    runs-on: macos-26
+    runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Xcode 26.2
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '26.2'
-
-      - name: Install SDL2
-        run: brew install sdl2
+      - name: Download SDL2 Framework
+        run: |
+          curl -L -o SDL2.dmg https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.dmg
+          hdiutil attach SDL2.dmg
+          cp -R /Volumes/SDL2/SDL2.framework .
+          hdiutil detach /Volumes/SDL2
 
       - name: Build QUASI88 macOS app
         run: |
-          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON
+          cmake -S. -Bbuild \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DSDL2_FRAMEWORK_PATH=$(pwd) \
+            -DSDL2_INCLUDE_DIR=$(pwd)/SDL2.framework/Headers \
+            -DSDL2_LIBRARY=$(pwd)/SDL2.framework \
+            -DMACOSX_STANDALONE_APP_BUNDLE=ON \
+            -DCPACK=ON
           cmake --build build --config Release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUASI88_macOS
+          path: build/QUASI88.app
+
+      - name: Package for Release
+        if: ${{ github.event_name == 'release' && !env.ACT }}
+        run: |
           cpack --config build/CPackConfig.cmake -G DragNDrop -B build
           dmg_file=$(ls build/*.dmg | head -n 1)
           mv "$dmg_file" build/QUASI88_macOS.dmg
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: QUASI88_macOS.dmg
-          path: build/QUASI88_macOS.dmg
 
       - name: Update Release
         if: ${{ github.event_name == 'release' && !env.ACT }}
@@ -60,3 +67,4 @@ jobs:
         with:
           file: build/QUASI88_macOS.dmg
           overwrite: true
+          tag: ${{ github.ref }}

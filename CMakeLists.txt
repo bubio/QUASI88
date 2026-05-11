@@ -10,6 +10,7 @@ option(USE_SOUND "Enable sound engine" ON)
 option(USE_FMGEN "Enable fmgen (FM Sound Generator)" ON)
 option(SUPPORT_DOUBLE "Support double size display" ON)
 option(USE_MONITOR "Enable monitor mode (debugger)" ON)
+option(MACOSX_STANDALONE_APP_BUNDLE "Generate a portable app bundle on macOS" OFF)
 
 # Find Dependencies
 find_package(SDL2 REQUIRED)
@@ -303,3 +304,12 @@ else()
 endif()
 
 include(CPack)
+
+if(APPLE AND MACOSX_STANDALONE_APP_BUNDLE)
+    install(CODE "
+        include(BundleUtilities)
+        fixup_bundle(\${CMAKE_INSTALL_PREFIX}/QUASI88.app \"\" \"\")
+        "
+        COMPONENT Runtime)
+endif()
+

@@ -1,0 +1,87 @@
+name: Windows Build
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - '*.md'
+      - 'doc/**'
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - '*.md'
+      - 'doc/**'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, Win32, ARM64]
+        include:
+          - arch: x64
+            vcpkg_arch: x64-windows
+            cmake_arch: x64
+          - arch: Win32
+            vcpkg_arch: x86-windows
+            cmake_arch: Win32
+          - arch: ARM64
+            vcpkg_arch: arm64-windows
+            cmake_arch: ARM64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install SDL2 via vcpkg
+        run: vcpkg install sdl2:${{ matrix.vcpkg_arch }}
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -A ${{ matrix.cmake_arch }} `
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCPACK=ON
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Collect Artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path artifacts -Force | Out-Null
+          Copy-Item build/Release/QUASI88.exe artifacts/ -Force
+          Copy-Item build/Release/*.dll artifacts/ -Force
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUASI88_Windows_${{ matrix.arch }}
+          path: artifacts/
+
+      - name: Package for Release
+        if: ${{ github.event_name == 'release' && !env.ACT }}
+        shell: pwsh
+        run: |
+          cd build
+          cpack -G ZIP
+          $zip = Get-ChildItem *.zip | Select-Object -First 1
+          Move-Item $zip.Name "../QUASI88_Windows_${{ matrix.arch }}.zip"
+
+      - name: Update Release
+        if: ${{ github.event_name == 'release' && !env.ACT }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: QUASI88_Windows_${{ matrix.arch }}.zip
+          overwrite: true
+          tag: ${{ github.ref }}

@@ -1,0 +1,96 @@
+name: Linux Build
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - '*.md'
+      - 'doc/**'
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - '*.md'
+      - 'doc/**'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runs-on: ubuntu-22.04
+            linuxdeploy_arch: x86_64
+          - arch: arm64
+            runs-on: ubuntu-24.04-arm
+            linuxdeploy_arch: aarch64
+
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev rpm wget
+
+      - name: Configure and Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build -j $(nproc)
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUASI88_Linux_${{ matrix.arch }}
+          path: build/QUASI88
+
+      - name: Build AppImage and Packages for Release
+        if: ${{ github.event_name == 'release' && !env.ACT }}
+        run: |
+          # Prepare AppImage metadata
+          mkdir -p build/AppDir/usr/share/applications
+          mkdir -p build/AppDir/usr/share/icons/hicolor/256x256/apps
+          cat <<EOF > build/AppDir/usr/share/applications/quasi88.desktop
+          [Desktop Entry]
+          Name=QUASI88
+          Exec=QUASI88
+          Icon=quasi88
+          Type=Application
+          Categories=Game;Emulator;
+          Comment=PC-8801 Emulator
+          EOF
+          cp AppIcon.png build/AppDir/usr/share/icons/hicolor/256x256/apps/quasi88.png
+          
+          # Install and Run linuxdeploy
+          cmake --install build --prefix build/AppDir/usr
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.linuxdeploy_arch }}.AppImage
+          chmod +x linuxdeploy-${{ matrix.linuxdeploy_arch }}.AppImage
+          ./linuxdeploy-${{ matrix.linuxdeploy_arch }}.AppImage --appimage-extract-and-run --appdir=build/AppDir -d build/AppDir/usr/share/applications/quasi88.desktop -o appimage
+          mv QUASI88-*.AppImage QUASI88_Linux_${{ matrix.arch }}.AppImage
+          
+          # Build DEB and RPM
+          cd build
+          cpack -G "DEB;RPM"
+          mv *.deb QUASI88_Linux_${{ matrix.arch. }}.deb
+          mv *.rpm QUASI88_Linux_${{ matrix.arch. }}.rpm
+
+      - name: Update Release
+        if: ${{ github.event_name == 'release' && !env.ACT }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: "{*.AppImage,build/*.deb,build/*.rpm}"
+          file_glob: true
+          overwrite: true
+          tag: ${{ github.ref }}
