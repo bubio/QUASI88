@@ -31,7 +31,7 @@ jobs:
 
       - name: Download SDL2 Framework
         run: |
-          curl -L -o SDL2.dmg https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.dmg
+          curl -L -o SDL2.dmg https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10.dmg
           hdiutil attach SDL2.dmg
           cp -R /Volumes/SDL2/SDL2.framework .
           hdiutil detach /Volumes/SDL2

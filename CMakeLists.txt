@@ -1,8 +1,9 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 project(QUASI88 VERSION 0.7.3 LANGUAGES C CXX)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS deployment target" FORCE)
+    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "" FORCE)
 endif()
 
 # Options
@@ -10,23 +11,63 @@ option(USE_SOUND "Enable sound engine" ON)
 option(USE_FMGEN "Enable fmgen (FM Sound Generator)" ON)
 option(SUPPORT_DOUBLE "Support double size display" ON)
 option(USE_MONITOR "Enable monitor mode (debugger)" ON)
-option(MACOSX_STANDALONE_APP_BUNDLE "Generate a portable app bundle on macOS" OFF)
 
-# Find Dependencies
-if(APPLE)
-    # Search for SDL2 framework
-    find_library(SDL2_LIBRARY NAMES SDL2)
-    find_path(SDL2_INCLUDE_DIR NAMES SDL.h PATH_SUFFIXES SDL2)
-    
-    if(SDL2_LIBRARY AND SDL2_INCLUDE_DIR)
-        set(SDL2_FOUND TRUE)
-        add_library(SDL2::SDL2 INTERFACE IMPORTED)
-        target_link_libraries(SDL2::SDL2 INTERFACE "${SDL2_LIBRARY}")
-        target_include_directories(SDL2::SDL2 INTERFACE "${SDL2_INCLUDE_DIR}")
+# --- SDL2 Handling ------------------------------------------------------
+set(SDL2_VERSION "2.32.10")
+include(FetchContent)
+
+if(WIN32)
+    # Windows: Download pre-built VC development binaries
+    FetchContent_Declare(
+        SDL2_bin
+        URL "https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/SDL2-devel-${SDL2_VERSION}-VC.zip"
+    )
+    FetchContent_MakeAvailable(SDL2_bin)
+    set(SDL2_DIR "${sdl2_bin_SOURCE_DIR}")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(SDL2_ARCH "x64")
+    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+        set(SDL2_ARCH "x86")
     else()
-        find_package(SDL2 REQUIRED)
+        set(SDL2_ARCH "arm64")
     endif()
+
+    add_library(SDL2::SDL2 SHARED IMPORTED GLOBAL)
+    set_target_properties(SDL2::SDL2 PROPERTIES
+        IMPORTED_IMPLIB "${SDL2_DIR}/lib/${SDL2_ARCH}/SDL2.lib"
+        IMPORTED_LOCATION "${SDL2_DIR}/lib/${SDL2_ARCH}/SDL2.dll"
+        INTERFACE_INCLUDE_DIRECTORIES "${SDL2_DIR}/include"
+    )
+    add_library(SDL2::SDL2main STATIC IMPORTED GLOBAL)
+    set_target_properties(SDL2::SDL2main PROPERTIES
+        IMPORTED_LOCATION "${SDL2_DIR}/lib/${SDL2_ARCH}/SDL2main.lib"
+    )
+    # Bundle DLL for Windows (installed next to .exe)
+    install(FILES "${SDL2_DIR}/lib/${SDL2_ARCH}/SDL2.dll" DESTINATION bin)
+
+elseif(APPLE)
+    # macOS: Download source and build to ensure architectures and bundling work correctly
+    FetchContent_Declare(
+      SDL2
+      URL "https://github.com/libsdl-org/SDL/archive/refs/tags/release-${SDL2_VERSION}.tar.gz"
+    )
+    set(SDL_SHARED ON CACHE BOOL "" FORCE)
+    set(SDL_STATIC OFF CACHE BOOL "" FORCE)
+    set(SDL_TEST OFF CACHE BOOL "" FORCE)
+    set(SDL_INSTALL ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(SDL2)
+    
+    if(NOT TARGET SDL2::SDL2)
+        add_library(SDL2::SDL2 ALIAS SDL2)
+    endif()
+    if(NOT TARGET SDL2::SDL2main)
+        add_library(SDL2::SDL2main ALIAS SDL2main)
+    endif()
+    
+    # Bundle built SDL2 for macOS
+    install(TARGETS SDL2 DESTINATION QUASI88.app/Contents/Frameworks)
 else()
+    # Linux: Use system SDL2
     find_package(SDL2 REQUIRED)
 endif()
 
@@ -148,7 +189,6 @@ if(WIN32)
 else()
     set(OSDEP_DIR ${SRCDIR}/osdepend/unix)
     list(APPEND SOURCES ${OSDEP_DIR}/file-op.c)
-    # These will be defined via target_compile_definitions later
 endif()
 list(APPEND INCDIRS ${OSDEP_DIR})
 list(APPEND INCDIRS ${SRCDIR}/tk/q8tk/q8tk)
@@ -169,55 +209,29 @@ if(USE_SOUND)
     set(SD_SDL_DIR ${XMAME_DIR}/quasi88/SDL)
     set(XM_SRC_DIR ${XMAME_DIR}/src)
     set(XM_SOUND_DIR ${XM_SRC_DIR}/sound)
-
     list(APPEND SOURCES
-        ${SD_Q88_DIR}/mame-quasi88.c
-        ${SD_Q88_DIR}/beep.c
-        ${SD_Q88_DIR}/beepintf.c
-        ${SD_Q88_DIR}/pcg.c
-        ${SD_Q88_DIR}/pcgintf.c
-        ${XM_SRC_DIR}/driver.c
-        ${XM_SRC_DIR}/restrack.c
-        ${XM_SRC_DIR}/sound.c
-        ${XM_SRC_DIR}/sndintrf.c
-        ${XM_SRC_DIR}/streams.c
-        ${XM_SOUND_DIR}/flt_vol.c
-        ${XM_SOUND_DIR}/flt_rc.c
-        ${XM_SOUND_DIR}/wavwrite.c
-        ${XM_SOUND_DIR}/2203intf.c
-        ${XM_SOUND_DIR}/2608intf.c
-        ${XM_SOUND_DIR}/ay8910.c
-        ${XM_SOUND_DIR}/fm.c
-        ${XM_SOUND_DIR}/ymdeltat.c
-        ${XM_SOUND_DIR}/samples.c
-        ${SD_SDL_DIR}/audio.c
-        ${SD_SDL_DIR}/sdl.c
+        ${SD_Q88_DIR}/mame-quasi88.c ${SD_Q88_DIR}/beep.c ${SD_Q88_DIR}/beepintf.c
+        ${SD_Q88_DIR}/pcg.c ${SD_Q88_DIR}/pcgintf.c ${XM_SRC_DIR}/driver.c
+        ${XM_SRC_DIR}/restrack.c ${XM_SRC_DIR}/sound.c ${XM_SRC_DIR}/sndintrf.c
+        ${XM_SRC_DIR}/streams.c ${XM_SOUND_DIR}/flt_vol.c ${XM_SOUND_DIR}/flt_rc.c
+        ${XM_SOUND_DIR}/wavwrite.c ${XM_SOUND_DIR}/2203intf.c ${XM_SOUND_DIR}/2608intf.c
+        ${XM_SOUND_DIR}/ay8910.c ${XM_SOUND_DIR}/fm.c ${XM_SOUND_DIR}/ymdeltat.c
+        ${XM_SOUND_DIR}/samples.c ${SD_SDL_DIR}/audio.c ${SD_SDL_DIR}/sdl.c
     )
-    list(APPEND INCDIRS
-        ${XMAME_DIR}
-        ${SD_Q88_DIR}
-        ${SD_SDL_DIR}
-        ${XM_SRC_DIR}
-        ${XM_SOUND_DIR}
-    )
+    list(APPEND INCDIRS ${XMAME_DIR} ${SD_Q88_DIR} ${SD_SDL_DIR} ${XM_SRC_DIR} ${XM_SOUND_DIR})
     add_definitions(-DUSE_SOUND -DPI=M_PI -DSYSDEP_DSP_SDL)
-
     if(USE_FMGEN)
         set(FMGEN_DIR ${SRCDIR}/snddrv/fmgen)
         list(APPEND SOURCES
-            ${SD_Q88_DIR}/2203fmgen.cpp
-            ${SD_Q88_DIR}/2608fmgen.cpp
-            ${FMGEN_DIR}/fmgen.cpp
-            ${FMGEN_DIR}/fmtimer.cpp
-            ${FMGEN_DIR}/opna.cpp
-            ${FMGEN_DIR}/psg.cpp
+            ${SD_Q88_DIR}/2203fmgen.cpp ${SD_Q88_DIR}/2608fmgen.cpp
+            ${FMGEN_DIR}/fmgen.cpp ${FMGEN_DIR}/fmtimer.cpp ${FMGEN_DIR}/opna.cpp ${FMGEN_DIR}/psg.cpp
         )
         list(APPEND INCDIRS ${FMGEN_DIR})
         add_definitions(-DUSE_FMGEN)
     endif()
 endif()
 
-# Executable
+# --- Executable ---------------------------------------------------------
 if(WIN32)
     add_executable(QUASI88 WIN32 ${SOURCES})
 else()
@@ -226,7 +240,6 @@ endif()
 
 if(APPLE)
     set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/AppIcon.png")
-if(APPLE)
     set_target_properties(QUASI88 PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_GUI_IDENTIFIER "com.bubio.quasi88"
@@ -238,32 +251,17 @@ if(APPLE)
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
         INSTALL_RPATH "@executable_path/../Frameworks"
     )
-
-    set_source_files_properties(${APP_ICON} PROPERTIES
-        MACOSX_PACKAGE_LOCATION "Resources"
-    )
-
+    set_source_files_properties(${APP_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     target_sources(QUASI88 PRIVATE ${APP_ICON})
 endif()
 
-
-# Target Include Directories
 target_include_directories(QUASI88 PRIVATE ${INCDIRS})
-
-# Target Compilation Definitions
-target_compile_definitions(QUASI88 PRIVATE
-    QUASI88_SDL2
-    HAVE_INTPTR_T
-    "INLINE=static __inline__"
-    "CLIB_DECL="
-)
+target_compile_definitions(QUASI88 PRIVATE QUASI88_SDL2 HAVE_INTPTR_T "INLINE=static __inline__" "CLIB_DECL=")
 
 if(APPLE)
     target_compile_definitions(QUASI88 PRIVATE
         "ROM_DIR=\"~/Library/Application Support/quasi88/rom/\""
-        "DISK_DIR=\"~/\""
-        "TAPE_DIR=\"~/\""
-        "SNAP_DIR=\"~/Pictures/quasi88/\""
+        "DISK_DIR=\"~/\"" "TAPE_DIR=\"~/\"" "SNAP_DIR=\"~/Pictures/quasi88/\""
         "STATE_DIR=\"~/Library/Application Support/quasi88/state/\""
         "L_CFG_DIR=\"~/Library/Application Support/quasi88/rc/\""
         "G_CFG_DIR=\"~/Library/Application Support/quasi88/\""
@@ -271,9 +269,7 @@ if(APPLE)
 elseif(UNIX)
     target_compile_definitions(QUASI88 PRIVATE
         "ROM_DIR=\"~/.local/share/quasi88/rom/\""
-        "DISK_DIR=\"~/\""
-        "TAPE_DIR=\"~/\""
-        "SNAP_DIR=\"~/Pictures/quasi88/\""
+        "DISK_DIR=\"~/\"" "TAPE_DIR=\"~/\"" "SNAP_DIR=\"~/Pictures/quasi88/\""
         "STATE_DIR=\"~/.local/share/quasi88/state/\""
         "L_CFG_DIR=\"~/.config/quasi88/rc/\""
         "G_CFG_DIR=\"~/.config/quasi88/\""
@@ -293,9 +289,9 @@ if(USE_SOUND)
     endif()
 endif()
 
-# Link Libraries
+# --- Link Libraries -----------------------------------------------------
 if(APPLE)
-    target_link_libraries(QUASI88 PRIVATE SDL2::SDL2 "-framework Cocoa")
+    target_link_libraries(QUASI88 PRIVATE SDL2::SDL2 "-framework Cocoa" "-framework CoreVideo" "-framework IOKit" "-framework CoreFoundation")
 elseif(WIN32)
     target_link_libraries(QUASI88 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 else()
@@ -306,42 +302,27 @@ if(UNIX)
     target_link_libraries(QUASI88 PRIVATE m)
 endif()
 
-# Compiler-specific options
 if(MSVC)
     target_compile_options(QUASI88 PRIVATE /utf-8)
 endif()
-# Optimization flags are handled by CMAKE_BUILD_TYPE (e.g. -O2 for Release, -g for Debug)
 
-# Installation
-install(TARGETS QUASI88
-    BUNDLE DESTINATION .
-    RUNTIME DESTINATION bin
-)
+# --- Installation and Packaging -----------------------------------------
+install(TARGETS QUASI88 BUNDLE DESTINATION . RUNTIME DESTINATION bin)
+
 # CPack
 set(CPACK_PACKAGE_NAME "QUASI88")
 set(CPACK_PACKAGE_VENDOR "bubio")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "PC-8801 Emulator")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 
 if(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
 elseif(WIN32)
-    set(CPACK_GENERATOR "NSIS;ZIP")
+    set(CPACK_GENERATOR "ZIP")
 else()
-    set(CPACK_GENERATOR "DEB;RPM;TGZ")
+    set(CPACK_GENERATOR "DEB;RPM")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "bubio")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsdl2-2.0-0")
 endif()
 
 include(CPack)
-
-if(APPLE AND MACOSX_STANDALONE_APP_BUNDLE)
-    install(CODE "
-        include(BundleUtilities)
-        set(BU_CHMOD_BUNDLE_ITEMS ON)
-        fixup_bundle(\${CMAKE_INSTALL_PREFIX}/QUASI88.app \"\" \"\${CMAKE_CURRENT_SOURCE_DIR}\")
-        "
-        COMPONENT Runtime)
-endif()
-

@@ -30,38 +30,34 @@ jobs:
         arch: [x64, Win32, ARM64]
         include:
           - arch: x64
-            vcpkg_arch: x64-windows
             cmake_arch: x64
           - arch: Win32
-            vcpkg_arch: x86-windows
             cmake_arch: Win32
           - arch: ARM64
-            vcpkg_arch: arm64-windows
             cmake_arch: ARM64
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install SDL2 via vcpkg
-        run: vcpkg install sdl2:${{ matrix.vcpkg_arch }}
-
       - name: Configure CMake
         run: |
           cmake -S . -B build -A ${{ matrix.cmake_arch }} `
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCMAKE_BUILD_TYPE=Release `
             -DCPACK=ON
 
       - name: Build
         run: cmake --build build --config Release
 
+      - name: Install (Collect DLLs)
+        run: cmake --install build --prefix dist
+
       - name: Collect Artifacts
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path artifacts -Force | Out-Null
-          Copy-Item build/Release/QUASI88.exe artifacts/ -Force
-          Copy-Item build/Release/*.dll artifacts/ -Force
+          Copy-Item dist/bin/QUASI88.exe artifacts/ -Force
+          Copy-Item dist/bin/*.dll artifacts/ -Force
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
