@@ -83,8 +83,8 @@ jobs:
           # Build DEB and RPM
           cd build
           cpack -G "DEB;RPM"
-          mv *.deb QUASI88_Linux_${{ matrix.arch. }}.deb
-          mv *.rpm QUASI88_Linux_${{ matrix.arch. }}.rpm
+          mv *.deb QUASI88_Linux_${{ matrix.arch }}.deb
+          mv *.rpm QUASI88_Linux_${{ matrix.arch }}.rpm
 
       - name: Update Release
         if: ${{ github.event_name == 'release' && !env.ACT }}
