@@ -66,4 +66,4 @@ jobs:
         with:
           file: QUASI88_macOS.zip
           overwrite: true
-          tag: ${{ github.ref }}
+          tag: ${{ github.ref_name }}

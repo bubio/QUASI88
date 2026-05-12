@@ -78,6 +78,6 @@ jobs:
         if: ${{ github.event_name == 'release' && !env.ACT }}
         uses: svenstaro/upload-release-action@v2
         with:
-          file: QUASI88_Windows_${{ matrix.arch }}.zip
+          file: build/QUASI88_Windows_${{ matrix.arch }}.zip
           overwrite: true
-          tag: ${{ github.ref }}
+          tag: ${{ github.ref_name }}

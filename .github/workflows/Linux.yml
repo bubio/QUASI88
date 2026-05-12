@@ -93,4 +93,4 @@ jobs:
           file: "{*.AppImage,build/*.deb,build/*.rpm}"
           file_glob: true
           overwrite: true
-          tag: ${{ github.ref }}
+          tag: ${{ github.ref_name }}

@@ -78,4 +78,4 @@ jobs:
         with:
           file: build/QUASI88_Linux_armhf.deb
           overwrite: true
-          tag: ${{ github.ref }}
+          tag: ${{ github.ref_name }}
