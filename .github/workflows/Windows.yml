@@ -69,15 +69,12 @@ jobs:
         if: ${{ github.event_name == 'release' && !env.ACT }}
         shell: pwsh
         run: |
-          cd build
-          cpack -G ZIP
-          $zip = Get-ChildItem *.zip | Select-Object -First 1
-          Move-Item $zip.Name "../QUASI88_Windows_${{ matrix.arch }}.zip"
+          Compress-Archive -Path artifacts/* -DestinationPath "QUASI88_Windows_${{ matrix.arch }}.zip" -Force
 
       - name: Update Release
         if: ${{ github.event_name == 'release' && !env.ACT }}
         uses: svenstaro/upload-release-action@v2
         with:
-          file: build/QUASI88_Windows_${{ matrix.arch }}.zip
+          file: QUASI88_Windows_${{ matrix.arch }}.zip
           overwrite: true
           tag: ${{ github.ref_name }}

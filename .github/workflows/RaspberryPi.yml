@@ -52,7 +52,7 @@ jobs:
       - name: Configure and build
         run: |
           export PKG_CONFIG_LIBDIR=/usr/lib/arm-linux-gnueabihf/pkgconfig
-          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCPACK=ON -DCMAKE_INSTALL_PREFIX=/usr \
+          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DCPACK=ON -DCMAKE_INSTALL_PREFIX=/usr \
             -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc \
             -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ \
             -DCPACK_GENERATOR=DEB \
