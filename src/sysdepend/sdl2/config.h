@@ -73,7 +73,7 @@
 #ifdef _MSC_VER
 
 /* VC のインラインキーワード */
-#define INLINE			static __inline
+#define INLINE			__inline
 
 
 /* サウンドドライバ用に、PI(π)とM_PI(π)を定義 …  MSC以外では不要? 必要? */

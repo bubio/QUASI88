@@ -150,15 +150,29 @@ int osd_kanji_code(void)
 		char *s;
 		s = setlocale(LC_CTYPE, "");
 		if (s) {
-			for (i = 0; i < COUNTOF(locale_list); i++) {
+			for (i = 0; i < (int)COUNTOF(locale_list); i++) {
 				if (strcmp(s, locale_list[i].name) == 0) {
 					filename_coding = locale_list[i].code;
 					break;
 				}
 			}
+			if (filename_coding == FILENAME_CODING_AUTO) {
+				if (strstr(s, ".UTF-8") || strstr(s, ".utf-8") ||
+					strstr(s, ".UTF8")  || strstr(s, ".utf8")) {
+					filename_coding = FILENAME_CODING_UTF8;
+				} else if (strstr(s, ".EUC") || strstr(s, ".euc")) {
+					filename_coding = FILENAME_CODING_EUC;
+				} else if (strstr(s, ".SJIS") || strstr(s, ".sjis")) {
+					filename_coding = FILENAME_CODING_SJIS;
+				}
+			}
 		}
 		if (filename_coding == FILENAME_CODING_AUTO) {
+#ifdef __APPLE__
+			filename_coding = FILENAME_CODING_UTF8;
+#else
 			filename_coding = FILENAME_CODING_ASCII;
+#endif
 		}
 	}
 
@@ -921,6 +935,7 @@ int osd_file_stat(const char *pathname)
  ****************************************************************************/
 static int parse_tilda(const char *home, const char *path,
 					   char *result_path, int result_size);
+static int make_dir_p(const char *path);
 static int make_dir(const char *dname);
 
 int osd_file_config_init(void)
@@ -1026,6 +1041,7 @@ int osd_file_config_init(void)
 			strcpy(dir_rom, dir_cwd);
 		}
 	}
+	make_dir_p(dir_rom);
 
 
 	/* DISKディレクトリを設定する */
@@ -1039,6 +1055,7 @@ int osd_file_config_init(void)
 			strcpy(dir_disk, dir_cwd);
 		}
 	}
+	make_dir_p(dir_disk);
 
 
 	/* TAPEディレクトリを設定する */
@@ -1052,6 +1069,7 @@ int osd_file_config_init(void)
 			strcpy(dir_tape, dir_cwd);
 		}
 	}
+	make_dir_p(dir_tape);
 
 
 	/* SNAPディレクトリを設定する */
@@ -1067,6 +1085,7 @@ int osd_file_config_init(void)
 			strcpy(dir_snap, dir_cwd);
 		}
 	}
+	make_dir_p(dir_snap);
 
 
 	/* STATEディレクトリを設定する */
@@ -1086,6 +1105,7 @@ int osd_file_config_init(void)
 			}
 		}
 	}
+	make_dir_p(dir_state);
 
 
 	/* 全体設定ディレクトリを設定する */
@@ -1100,6 +1120,7 @@ int osd_file_config_init(void)
 			strcpy(dir_g_cfg, "");
 		}
 	}
+	make_dir_p(dir_g_cfg);
 
 
 	/* 個別設定ディレクトリを設定する */
@@ -1114,7 +1135,7 @@ int osd_file_config_init(void)
 			strcpy(dir_l_cfg, "");
 		}
 	}
-
+	make_dir_p(dir_l_cfg);
 
 
 	if (g_cfg) {
@@ -1163,7 +1184,7 @@ static int parse_tilda(const char *home, const char *path,
 
 			/* home から最後のディレクトリ部を削り切り取ろう  */
 			strcpy(buf, home);
-			i = strlen(buf) - 1;
+			i = (int)strlen(buf) - 1;
 
 			/* 末尾の / を全てスキップ */
 			while (0 <= i && buf[i] == '/') {
@@ -1201,6 +1222,43 @@ static int parse_tilda(const char *home, const char *path,
 			return FALSE;
 		}
 	}
+}
+
+
+static int make_dir_p(const char *path)
+{
+	char tmp[OSD_MAX_FILENAME];
+	char *p = NULL;
+	size_t len;
+
+	snprintf(tmp, sizeof(tmp), "%s", path);
+	len = strlen(tmp);
+
+	/* 末尾の / を削除 */
+	if (tmp[len - 1] == '/')
+		tmp[len - 1] = '\0';
+
+	/* 途中のディレクトリを順番に作る */
+	for (p = tmp + 1; *p; p++) {
+		if (*p == '/') {
+			*p = '\0';
+
+			if (make_dir(tmp) != TRUE) {
+				if (errno != EEXIST)
+					return -1;
+			}
+
+			*p = '/';
+		}
+	}
+
+	/* 最後のディレクトリ */
+	if (make_dir(tmp) != TRUE) {
+		if (errno != EEXIST)
+			return -1;
+	}
+
+	return 0;
 }
 
 
