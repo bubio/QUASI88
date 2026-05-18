@@ -15,6 +15,7 @@
 #include "device.h"
 #include "event.h"
 #include "keyboard.h"
+#include "statusbar.h"
 
 /************************************************************************/
 
@@ -230,22 +231,24 @@ static int malloc_touchkey_spec(void)
 {
 	struct {
 		const T_LAYOUT_BUILDIN *layout_buildin;
+		const char *name;
 		int w, h;
 		int scale_w, scale_h;
 	} buildin_list[] = {
 #ifdef USE_BUILDIN_NEWMODE
-		{ buildin_newmodel, BUILDIN_NEWMODEL_W, BUILDIN_NEWMODEL_H, BUILDIN_NEWMODEL_SCALE_W, BUILDIN_NEWMODEL_SCALE_H, },
-#endif
-#ifdef USE_BUILDIN_OLDMODE
-		{ buildin_oldmodel, BUILDIN_OLDMODEL_W, BUILDIN_OLDMODEL_H, BUILDIN_OLDMODEL_SCALE_W, BUILDIN_OLDMODEL_SCALE_H, },
-#endif
-		{ buildin_jiskey,   BUILDIN_JISKEY_W,   BUILDIN_JISKEY_H,   BUILDIN_JISKEY_SCALE_W,   BUILDIN_JISKEY_SCALE_H,   },
-		{ buildin_tenkey,   BUILDIN_TENKEY_W,   BUILDIN_TENKEY_H,   BUILDIN_TENKEY_SCALE_W,   BUILDIN_TENKEY_SCALE_H,   },
-		{ buildin_gamekey,  BUILDIN_GAMEKEY_W,  BUILDIN_GAMEKEY_H,  BUILDIN_GAMEKEY_SCALE_W,  BUILDIN_GAMEKEY_SCALE_H,  },
+		{ buildin_newmodel, BUILDIN_NEWMODEL_NAME, BUILDIN_NEWMODEL_W, BUILDIN_NEWMODEL_H, BUILDIN_NEWMODEL_SCALE_W, BUILDIN_NEWMODEL_SCALE_H, },
+#endif											                    
+#ifdef USE_BUILDIN_OLDMODE						                    
+		{ buildin_oldmodel, BUILDIN_OLDMODEL_NAME, BUILDIN_OLDMODEL_W, BUILDIN_OLDMODEL_H, BUILDIN_OLDMODEL_SCALE_W, BUILDIN_OLDMODEL_SCALE_H, },
+#endif											                    
+		{ buildin_jiskey,   BUILDIN_JISKEY_NAME,   BUILDIN_JISKEY_W,   BUILDIN_JISKEY_H,   BUILDIN_JISKEY_SCALE_W,   BUILDIN_JISKEY_SCALE_H,   },
+		{ buildin_tenkey,   BUILDIN_TENKEY_NAME,   BUILDIN_TENKEY_W,   BUILDIN_TENKEY_H,   BUILDIN_TENKEY_SCALE_W,   BUILDIN_TENKEY_SCALE_H,   },
+		{ buildin_gamekey,  BUILDIN_GAMEKEY_NAME,  BUILDIN_GAMEKEY_W,  BUILDIN_GAMEKEY_H,  BUILDIN_GAMEKEY_SCALE_W,  BUILDIN_GAMEKEY_SCALE_H,  },
 		{ NULL, },
 	}, *ll;
 
 	for (ll = &buildin_list[0]; ll->layout_buildin; ll++) {
+		const char *name = ll->name;
 		const T_LAYOUT_BUILDIN *l = ll->layout_buildin;
 		int base_width = ll->w;
 		int base_height = ll->h;
@@ -291,6 +294,7 @@ static int malloc_touchkey_spec(void)
 			p++;
 		}
 
+		my_strncpy(touchkey_list[ nr_touchkey_list ].name, name, TOUCHKEY_NAME_SZ);
 		touchkey_list[ nr_touchkey_list ].layout = layout;
 		touchkey_list[ nr_touchkey_list ].sz_array = nr_item;
 		touchkey_list[ nr_touchkey_list ].base_width = base_width;
@@ -358,6 +362,8 @@ static void modifier_stat_request(int request);
 
 static int sdl2_touchkey_show(int layout_no)
 {
+	char buf[32 + TOUCHKEY_NAME_SZ];
+
 	if (enable_touchkey == FALSE) {
 		return FALSE;
 	}
@@ -371,11 +377,20 @@ static int sdl2_touchkey_show(int layout_no)
 		key_show = TRUE;
 		SDL_HideWindow(key_window);
 		SDL_SetWindowSize(key_window, key_width, key_height);
+
+		my_strncpy(buf, Q_TITLE "    ", sizeof(buf));
+		my_strncat(buf, touchkey_list[ layout_no ].name, sizeof(buf));
+		SDL_SetWindowTitle(key_window, buf);
+
 		SDL_ShowWindow(key_window);
 	} else {
 		sdl_buildin_touchkey = TRUE;
 		quasi88_cfg_reset_window();
 	}
+
+	my_strncpy(buf, "Touchkey ", sizeof(buf));
+	my_strncat(buf, touchkey_list[ layout_no ].name, sizeof(buf));
+	statusbar_message(STATUS_INFO, buf, buf);
 
 	return TRUE;
 }
@@ -396,6 +411,8 @@ void sdl2_touchkey_hide(int do_resize)
 			quasi88_cfg_reset_window();
 		}
 	}
+
+	statusbar_message(1, "", "");
 }
 
 void sdl2_touchkey(int request)
@@ -2164,6 +2181,7 @@ static int config_read_touchkeyconf_file(const char *filename)
 				/* 有効な識別タグだった */
 				touchkey_list_p = &touchkey_list[ nr_touchkey_list ];
 
+				my_strncpy(touchkey_list_p->name, token[0], TOUCHKEY_NAME_SZ);
 				touchkey_list_p->layout = layout;
 				touchkey_list_p->sz_array = 0;
 				touchkey_list_p->base_width = base_width;

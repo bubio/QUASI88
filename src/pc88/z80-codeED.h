@@ -35,53 +35,53 @@
 		/* 16ビット転送命令 */
 
 	case LD_x16x_HL:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		M_WRMEM(J.W++, z80->HL.B.l);
-		M_WRMEM(J.W,   z80->HL.B.h);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		M_WRMEM(z80, J.W++, z80->HL.B.l);
+		M_WRMEM(z80, J.W,   z80->HL.B.h);
 		break;
 	case LD_x16x_DE:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		M_WRMEM(J.W++, z80->DE.B.l);
-		M_WRMEM(J.W,   z80->DE.B.h);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		M_WRMEM(z80, J.W++, z80->DE.B.l);
+		M_WRMEM(z80, J.W,   z80->DE.B.h);
 		break;
 	case LD_x16x_BC:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		M_WRMEM(J.W++, z80->BC.B.l);
-		M_WRMEM(J.W,   z80->BC.B.h);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		M_WRMEM(z80, J.W++, z80->BC.B.l);
+		M_WRMEM(z80, J.W,   z80->BC.B.h);
 		break;
 	case LD_x16x_SP:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		M_WRMEM(J.W++, z80->SP.B.l);
-		M_WRMEM(J.W,   z80->SP.B.h);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		M_WRMEM(z80, J.W++, z80->SP.B.l);
+		M_WRMEM(z80, J.W,   z80->SP.B.h);
 		break;
 
 	case LD_HL_x16x:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		z80->HL.B.l = M_RDMEM(J.W++);
-		z80->HL.B.h = M_RDMEM(J.W);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		z80->HL.B.l = M_RDMEM(z80, J.W++);
+		z80->HL.B.h = M_RDMEM(z80, J.W);
 		break;
 	case LD_DE_x16x:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		z80->DE.B.l = M_RDMEM(J.W++);
-		z80->DE.B.h = M_RDMEM(J.W);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		z80->DE.B.l = M_RDMEM(z80, J.W++);
+		z80->DE.B.h = M_RDMEM(z80, J.W);
 		break;
 	case LD_BC_x16x:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		z80->BC.B.l = M_RDMEM(J.W++);
-		z80->BC.B.h = M_RDMEM(J.W);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		z80->BC.B.l = M_RDMEM(z80, J.W++);
+		z80->BC.B.h = M_RDMEM(z80, J.W);
 		break;
 	case LD_SP_x16x:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		z80->SP.B.l = M_RDMEM(J.W++);
-		z80->SP.B.h = M_RDMEM(J.W);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		z80->SP.B.l = M_RDMEM(z80, J.W++);
+		z80->SP.B.h = M_RDMEM(z80, J.W);
 		break;
 
 		/* 16ビット算術演算命令 */
@@ -116,16 +116,16 @@
 		/* ローテート・シフト命令 */
 
 	case RLD:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		J.B.l = (I << 4) | (z80->ACC & 0x0f);
-		M_WRMEM(z80->HL.W, J.B.l);
+		M_WRMEM(z80, z80->HL.W, J.B.l);
 		z80->ACC  = (I >> 4) | (z80->ACC & 0xf0);
 		z80->FLAG = SZP_table[z80->ACC] | (z80->FLAG & C_FLAG);
 		break;
 	case RRD:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		J.B.l = (I >> 4) | (z80->ACC << 4);
-		M_WRMEM(z80->HL.W, J.B.l);
+		M_WRMEM(z80, z80->HL.W, J.B.l);
 		z80->ACC  = (I & 0x0f) | (z80->ACC & 0xf0);
 		z80->FLAG = SZP_table[z80->ACC] | (z80->FLAG & C_FLAG);
 		break;
@@ -233,14 +233,14 @@
 		break;
 
 	case INI:
-		I = M_RDIO(z80->BC.B.l);
-		M_WRMEM(z80->HL.W++, I);
+		I = M_RDIO(z80, z80->BC.B.l);
+		M_WRMEM(z80, z80->HL.W++, I);
 		z80->BC.B.h--;
 		z80->FLAG = (z80->BC.B.h ? 0 : Z_FLAG) | N_FLAG | (z80->FLAG & C_FLAG);
 		break;
 	case INIR:
-		I = M_RDIO(z80->BC.B.l);
-		M_WRMEM(z80->HL.W++, I);
+		I = M_RDIO(z80, z80->BC.B.l);
+		M_WRMEM(z80, z80->HL.W++, I);
 		z80->BC.B.h--;
 		z80->FLAG = (z80->BC.B.h ? 0 : Z_FLAG) | N_FLAG | (z80->FLAG & C_FLAG);
 		if (z80->BC.B.h) {
@@ -249,14 +249,14 @@
 		}
 		break;
 	case IND:
-		I = M_RDIO(z80->BC.B.l);
-		M_WRMEM(z80->HL.W--, I);
+		I = M_RDIO(z80, z80->BC.B.l);
+		M_WRMEM(z80, z80->HL.W--, I);
 		z80->BC.B.h--;
 		z80->FLAG = (z80->BC.B.h ? 0 : Z_FLAG) | N_FLAG | (z80->FLAG & C_FLAG);
 		break;
 	case INDR:
-		I = M_RDIO(z80->BC.B.l);
-		M_WRMEM(z80->HL.W--, I);
+		I = M_RDIO(z80, z80->BC.B.l);
+		M_WRMEM(z80, z80->HL.W--, I);
 		z80->BC.B.h--;
 		z80->FLAG = (z80->BC.B.h ? 0 : Z_FLAG) | N_FLAG | (z80->FLAG & C_FLAG);
 		if (z80->BC.B.h) {
@@ -266,13 +266,13 @@
 		break;
 
 	case OUTI:
-		M_WRIO(z80->BC.B.l, M_RDMEM(z80->HL.W));
+		M_WRIO(z80, z80->BC.B.l, M_RDMEM(z80, z80->HL.W));
 		z80->HL.W++;
 		z80->BC.B.h--;
 		z80->FLAG = (z80->BC.B.h ? 0 : Z_FLAG) | N_FLAG | (z80->FLAG & C_FLAG);
 		break;
 	case OTIR:
-		M_WRIO(z80->BC.B.l, M_RDMEM(z80->HL.W));
+		M_WRIO(z80, z80->BC.B.l, M_RDMEM(z80, z80->HL.W));
 		z80->HL.W++;
 		z80->BC.B.h--;
 		z80->FLAG = (z80->BC.B.h ? 0 : Z_FLAG) | N_FLAG | (z80->FLAG & C_FLAG);
@@ -282,13 +282,13 @@
 		}
 		break;
 	case OUTD:
-		M_WRIO(z80->BC.B.l, M_RDMEM(z80->HL.W));
+		M_WRIO(z80, z80->BC.B.l, M_RDMEM(z80, z80->HL.W));
 		z80->HL.W--;
 		z80->BC.B.h--;
 		z80->FLAG = (z80->BC.B.h ? 0 : Z_FLAG) | N_FLAG | (z80->FLAG & C_FLAG);
 		break;
 	case OTDR:
-		M_WRIO(z80->BC.B.l, M_RDMEM(z80->HL.W));
+		M_WRIO(z80, z80->BC.B.l, M_RDMEM(z80, z80->HL.W));
 		z80->HL.W--;
 		z80->BC.B.h--;
 		z80->FLAG = (z80->BC.B.h ? 0 : Z_FLAG) | N_FLAG | (z80->FLAG & C_FLAG);
@@ -303,7 +303,7 @@
 	case LDI:
 		;
 		{
-			M_WRMEM(z80->DE.W++, M_RDMEM(z80->HL.W++));
+			M_WRMEM(z80, z80->DE.W++, M_RDMEM(z80, z80->HL.W++));
 			z80->BC.W--;
 			z80->FLAG =
 				(z80->FLAG & ~(N_FLAG | H_FLAG | P_FLAG)) |
@@ -313,7 +313,7 @@
 	case LDIR:
 		;
 		{
-			M_WRMEM(z80->DE.W++, M_RDMEM(z80->HL.W++));
+			M_WRMEM(z80, z80->DE.W++, M_RDMEM(z80, z80->HL.W++));
 			z80->BC.W--;
 			z80->FLAG =
 				(z80->FLAG & ~(N_FLAG | H_FLAG | P_FLAG)) |
@@ -327,7 +327,7 @@
 	case LDD:
 		;
 		{
-			M_WRMEM(z80->DE.W--, M_RDMEM(z80->HL.W--));
+			M_WRMEM(z80, z80->DE.W--, M_RDMEM(z80, z80->HL.W--));
 			z80->BC.W--;
 			z80->FLAG =
 				(z80->FLAG & ~(N_FLAG | H_FLAG | P_FLAG)) |
@@ -337,7 +337,7 @@
 	case LDDR:
 		;
 		{
-			M_WRMEM(z80->DE.W--, M_RDMEM(z80->HL.W--));
+			M_WRMEM(z80, z80->DE.W--, M_RDMEM(z80, z80->HL.W--));
 			z80->BC.W--;
 			z80->FLAG =
 				(z80->FLAG & ~(N_FLAG | H_FLAG | P_FLAG)) |
@@ -354,7 +354,7 @@
 	case CPI:
 		;
 		{
-			I = M_RDMEM(z80->HL.W++);
+			I = M_RDMEM(z80, z80->HL.W++);
 			J.B.l = z80->ACC - I;
 			z80->BC.W--;
 			z80->FLAG =
@@ -365,7 +365,7 @@
 	case CPIR:
 		;
 		{
-			I = M_RDMEM(z80->HL.W++);
+			I = M_RDMEM(z80, z80->HL.W++);
 			J.B.l = z80->ACC - I;
 			z80->BC.W--;
 			z80->FLAG =
@@ -380,7 +380,7 @@
 	case CPD:
 		;
 		{
-			I = M_RDMEM(z80->HL.W--);
+			I = M_RDMEM(z80, z80->HL.W--);
 			J.B.l = z80->ACC - I;
 			z80->BC.W--;
 			z80->FLAG =
@@ -391,7 +391,7 @@
 	case CPDR:
 		;
 		{
-			I = M_RDMEM(z80->HL.W--);
+			I = M_RDMEM(z80, z80->HL.W--);
 			J.B.l = z80->ACC - I;
 			z80->BC.W--;
 			z80->FLAG =

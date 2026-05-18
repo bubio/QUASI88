@@ -13,14 +13,6 @@
 #include "q8tk.h"
 #include "q8tk-common.h"
 
-#include "menu-reset.h"
-
-/*#define USE_COMBO_BOX*/
-
-
-static void set_reset_parm(void);
-
-static T_RESET_CFG reset_cfg;
 
 /***********************************************************************
  *
@@ -47,111 +39,13 @@ static void cb_reset_fn(UNUSED_WIDGET, void *p)
 
 static void cb_reset(UNUSED_WIDGET, UNUSED_PARM)
 {
-	set_reset_parm();
-
 	cpu_clock_mhz
-		= reset_cfg.boot_clock_4mhz ? CONST_4MHZ_CLOCK : CONST_8MHZ_CLOCK;
+		= reset_req.boot_clock_4mhz ? CONST_4MHZ_CLOCK : CONST_8MHZ_CLOCK;
 
-	quasi88_reset(&reset_cfg);
+	quasi88_reset(&reset_req);
 	quasi88_exec();
 }
 
-
-#ifdef USE_COMBO_BOX
-
-static const struct {
-	int mode;
-	const char *label;
-} basic_list[] = {
-	{ BASIC_V2,		"V2",	},
-	{ BASIC_V1H,	"V1H",	},
-	{ BASIC_V1S,	"V1S",	},
-	{ BASIC_N,		"N",	},
-}, clock_list[] = {
-	{ CLOCK_4MHZ,	"4MHz",	},
-	{ CLOCK_8MHZ,	"8MHz",	},
-};
-
-static Q8tkWidget *combo_basic;
-static Q8tkWidget *combo_clock;
-
-static void set_reset_parm(void)
-{
-	int i;
-	const char *label;
-
-	label = q8tk_combo_get_text(combo_basic);
-	for (i = 0; i < COUNTOF(basic_list); i++) {
-		if (strcmp(label, basic_list[i].label) == 0) {
-			reset_cfg.boot_basic = basic_list[i].mode;
-			break;
-		}
-	}
-
-	label = q8tk_combo_get_text(combo_clock);
-	for (i = 0; i < COUNTOF(clock_list); i++) {
-		if (strcmp(label, clock_list[i].label) == 0) {
-			reset_cfg.boot_clock_4mhz = clock_list[i].mode;
-			break;
-		}
-	}
-}
-
-static void reset_top_core(Q8tkWidget *d)
-{
-	int i, match;
-	Q8tkWidget *h, *l;
-
-	h = q8tk_hbox_new();
-	q8tk_widget_show(h);
-	q8tk_box_pack_start(Q8TK_DIALOG(d)->content_area, h);
-	{
-		l = q8tk_label_new(" Mode : ");
-		q8tk_widget_show(l);
-		q8tk_box_pack_start(h, l);
-
-		l = q8tk_combo_new();
-		match = 0;
-		for (i = 0; i < COUNTOF(basic_list); i++) {
-			q8tk_combo_append_popdown_strings(l, basic_list[i].label, NULL);
-			if (reset_cfg.boot_basic == basic_list[i].mode) {
-				match = i;
-			}
-		}
-		q8tk_combo_set_text(l, basic_list[match].label);
-		q8tk_misc_set_size(l, 8, 0);
-		q8tk_widget_show(l);
-		q8tk_box_pack_start(h, l);
-		combo_basic = l;
-
-		l = q8tk_label_new("    Clock : ");
-		q8tk_widget_show(l);
-		q8tk_box_pack_start(h, l);
-
-		l = q8tk_combo_new();
-		for (i = 0; i < COUNTOF(clock_list); i++) {
-			q8tk_combo_append_popdown_strings(l, clock_list[i].label, NULL);
-			if (reset_cfg.boot_clock_4mhz == clock_list[i].mode) {
-				match = i;
-			}
-		}
-		q8tk_combo_set_text(l, clock_list[match].label);
-		q8tk_misc_set_size(l, 8, 0);
-		q8tk_widget_show(l);
-		q8tk_box_pack_start(h, l);
-		combo_clock = l;
-	}
-
-	l = q8tk_label_new("");
-	q8tk_widget_show(l);
-	q8tk_box_pack_start(Q8TK_DIALOG(d)->content_area, l);
-
-	l = q8tk_label_new("");
-	q8tk_widget_show(l);
-	q8tk_box_pack_start(Q8TK_DIALOG(d)->content_area, l);
-}
-
-#else
 
 static const struct {
 	int mode;
@@ -166,23 +60,14 @@ static const struct {
 	{ CLOCK_8MHZ,	" 8MHz ", },
 };
 
-static int req_mode;
-static int req_clock;
-
-static void set_reset_parm(void)
-{
-	reset_cfg.boot_basic = req_mode;
-	reset_cfg.boot_clock_4mhz = req_clock;
-}
-
 static void cb_mode(UNUSED_WIDGET, void *p)
 {
-	req_mode = P2INT(p);
+	reset_req.boot_basic = P2INT(p);
 }
 
 static void cb_clock(UNUSED_WIDGET, void *p)
 {
-	req_clock = P2INT(p);
+	reset_req.boot_clock_4mhz = P2INT(p);
 }
 
 static void reset_top_core(Q8tkWidget *d)
@@ -207,7 +92,7 @@ static void reset_top_core(Q8tkWidget *d)
 			q8tk_box_pack_start(h, b);
 			q8tk_signal_connect(b, "clicked",
 								cb_mode, INT2P(basic_list[i].mode));
-			if (reset_cfg.boot_basic == basic_list[i].mode) {
+			if (reset_req.boot_basic == basic_list[i].mode) {
 				q8tk_toggle_button_set_state(b, TRUE);
 			}
 		}
@@ -233,17 +118,15 @@ static void reset_top_core(Q8tkWidget *d)
 			q8tk_box_pack_start(h, b);
 			q8tk_signal_connect(b, "clicked",
 								cb_clock, INT2P(clock_list[i].mode));
-			if (reset_cfg.boot_clock_4mhz == clock_list[i].mode) {
+			if (reset_req.boot_clock_4mhz == clock_list[i].mode) {
 				q8tk_toggle_button_set_state(b, TRUE);
 			}
 		}
 	}
 }
 
-#endif
 
-
-void reset_top(void)
+void askreset_top(void)
 {
 	int i;
 	Q8tkWidget *d, *a, *l;
@@ -251,9 +134,6 @@ void reset_top(void)
 		Q8TK_KEY_ESC, Q8TK_KEY_MENU,
 		Q8TK_KEY_F6, Q8TK_KEY_F7, Q8TK_KEY_F8, Q8TK_KEY_F9, Q8TK_KEY_F10,
 	};
-
-	/* 現在の、リセット情報を取得 */
-	quasi88_get_reset_cfg(&reset_cfg);
 
 
 	d = q8tk_dialog_new();

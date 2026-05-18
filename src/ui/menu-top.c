@@ -117,137 +117,18 @@ static struct {
 };
 
 /*----------------------------------------------------------------------*/
-/* 簡易リセットボタン ＋ モニターボタン */
-static Q8tkWidget *monitor_widget;
-static Q8tkWidget *quickres_widget;
-
-static int        top_misc_stat = 1;
-static Q8tkWidget *top_misc_button;
-
-static Q8tkWidget *menu_top_misc_quickres(void);
-static Q8tkWidget *menu_top_misc_monitor(void);
-
-static void cb_top_misc_stat(UNUSED_WIDGET, UNUSED_PARM)
-{
-	top_misc_stat ^= 1;
-	if (top_misc_stat) {
-		q8tk_widget_hide(quickres_widget);
-		q8tk_label_set(top_misc_button->child,  ">>");
-		q8tk_widget_show(monitor_widget);
-	} else {
-		q8tk_widget_show(quickres_widget);
-		q8tk_label_set(top_misc_button->child,  "<<");
-		q8tk_widget_hide(monitor_widget);
-	}
-}
-static Q8tkWidget *menu_top_button_misc(void)
-{
-	Q8tkWidget *box;
-
-	box = PACK_HBOX(NULL);
-
-	quickres_widget = menu_top_misc_quickres();
-	monitor_widget  = menu_top_misc_monitor();
-
-	top_misc_button = PACK_BUTTON(NULL,
-								  "<<",
-								  cb_top_misc_stat, NULL);
-
-	q8tk_box_pack_start(box, quickres_widget);
-	q8tk_box_pack_start(box, top_misc_button);
-	q8tk_box_pack_start(box, monitor_widget);
-	PACK_LABEL(box, "     ");
-
-	top_misc_stat ^= 1;
-	cb_top_misc_stat(0, 0);
-
-	return box;
-}
-
-/*----------------------------------------------------------------------*/
-/* 簡易リセットボタン   */
-static int get_quickres_basic(void)
-{
-	return reset_req.boot_basic;
-}
-static void cb_quickres_basic(UNUSED_WIDGET, void *p)
-{
-	if (reset_req.boot_basic != P2INT(p)) {
-		reset_req.boot_basic = P2INT(p);
-
-		q8tk_toggle_button_set_state(widget_reset_basic[ 0 ][ P2INT(p) ], TRUE);
-	}
-}
-static int get_quickres_clock(void)
-{
-	return reset_req.boot_clock_4mhz;
-}
-static void cb_quickres_clock(UNUSED_WIDGET, void *p)
-{
-	if (reset_req.boot_clock_4mhz != P2INT(p)) {
-		reset_req.boot_clock_4mhz = P2INT(p);
-
-		q8tk_toggle_button_set_state(widget_reset_clock[ 0 ][ P2INT(p) ], TRUE);
-	}
-}
-
-static Q8tkWidget *menu_top_misc_quickres(void)
-{
-	Q8tkWidget *box;
-	Q8List     *list;
-
-	box = PACK_HBOX(NULL);
-	{
-		list = PACK_RADIO_BUTTONS(PACK_VBOX(box),
-								  data_quickres_basic, COUNTOF(data_quickres_basic),
-								  get_quickres_basic(), cb_quickres_basic);
-
-		/* リストを手繰って、全ウィジットを取得 */
-		widget_reset_basic[1][BASIC_V2 ] = list->data;
-		list = list->next;
-		widget_reset_basic[1][BASIC_V1H] = list->data;
-		list = list->next;
-		widget_reset_basic[1][BASIC_V1S] = list->data;
-		list = list->next;
-		widget_reset_basic[1][BASIC_N  ] = list->data;
-
-
-		list = PACK_RADIO_BUTTONS(PACK_VBOX(box),
-								  data_quickres_clock, COUNTOF(data_quickres_clock),
-								  get_quickres_clock(), cb_quickres_clock);
-
-		/* リストを手繰って、全ウィジットを取得 */
-		widget_reset_clock[1][CLOCK_4MHZ] = list->data;
-		list = list->next;
-		widget_reset_clock[1][CLOCK_8MHZ] = list->data;
-
-
-		PACK_BUTTON(box,
-					GET_LABEL(data_quickres_reset, 0),
-					cb_reset_now, NULL);
-
-		PACK_VSEP(box);
-	}
-	q8tk_widget_hide(box);
-
-	return box;
-}
-
-/*----------------------------------------------------------------------*/
 /* モニターボタン */
 static void cb_top_monitor(UNUSED_WIDGET, UNUSED_PARM)
 {
 	quasi88_monitor(); /* ← q8tk_main_quit() 呼出済み */
 }
 
-static Q8tkWidget *menu_top_misc_monitor(void)
+static Q8tkWidget *menu_top_monitor(void)
 {
 	Q8tkWidget *box;
 
 	box = PACK_HBOX(NULL);
 	{
-		PACK_LABEL(box, "  ");
-
 		if (debug_mode) {
 			PACK_BUTTON(box,
 						GET_LABEL(data_top_monitor, DATA_TOP_MONITOR_BTN),
@@ -257,14 +138,13 @@ static Q8tkWidget *menu_top_misc_monitor(void)
 					   GET_LABEL(data_top_monitor, DATA_TOP_MONITOR_PAD));
 		}
 
-		PACK_LABEL(box, "     ");
+		PACK_LABEL(box, "                  ");
 	}
-	q8tk_widget_hide(box);
 
 	return box;
 }
 /*----------------------------------------------------------------------*/
-/* ステータス */
+/* ツールバー・ステータス */
 static int get_top_toolbar(void)
 {
 	return quasi88_cfg_now_toolbar();
@@ -287,11 +167,11 @@ static void cb_top_status(Q8tkWidget *widget, UNUSED_PARM)
 	quasi88_cfg_set_statusbar(on);
 }
 
-static void menu_top_status(Q8tkWidget *base_hbox)
+static Q8tkWidget *menu_top_toolbar_status(void)
 {
 	Q8tkWidget *vbox;
 
-	vbox = PACK_VBOX(base_hbox);
+	vbox = PACK_VBOX(NULL);
 	{
 		PACK_CHECK_BUTTON(vbox,
 						  GET_LABEL(data_top_status, DATA_TOP_STATUS_TOOLBAR),
@@ -305,6 +185,8 @@ static void menu_top_status(Q8tkWidget *base_hbox)
 
 		PACK_LABEL(vbox, GET_LABEL(data_top_status, DATA_TOP_STATUS_LABEL));
 	}
+
+	return vbox;
 }
 /*----------------------------------------------------------------------*/
 /* メインウインドウ下部のボタン */
@@ -337,10 +219,11 @@ static Q8tkWidget *menu_top_button(Q8tkWidget *accel)
 
 	hbox = PACK_HBOX(NULL);
 	{
-		w = menu_top_button_misc();
+		w = menu_top_monitor();
 		q8tk_box_pack_start(hbox, w);
 
-		menu_top_status(hbox);
+		w = menu_top_toolbar_status();
+		q8tk_box_pack_start(hbox, w);
 
 		for (i = 0; i < COUNTOF(data_top_button); i++, p++) {
 
@@ -471,9 +354,6 @@ Q8tkWidget *menu_top(void)
 	int i;
 	const t_menudata *l = data_top;
 	Q8tkWidget *win, *accel, *vbox, *notebook, *w, *fake;
-
-	/* 現在の、リセット情報を取得 */
-	quasi88_get_reset_cfg(&reset_req);
 
 
 	win = q8tk_window_new(Q8TK_WINDOW_TOPLEVEL);

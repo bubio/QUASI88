@@ -22,20 +22,21 @@ extern int resume_file;							/* ファイル名指定あり */
 
 
 
+typedef enum {
+	TYPE_INT,
+	TYPE_LONG,
+	TYPE_SHORT,
+	TYPE_CHAR,
+	TYPE_BYTE,
+	TYPE_WORD,
+	TYPE_PAIR,
+	TYPE_DOUBLE,
+	TYPE_256,
+	TYPE_STR,
+	TYPE_END
+} e_type;
 typedef struct {
-	enum {
-		TYPE_INT,
-		TYPE_LONG,
-		TYPE_SHORT,
-		TYPE_CHAR,
-		TYPE_BYTE,
-		TYPE_WORD,
-		TYPE_PAIR,
-		TYPE_DOUBLE,
-		TYPE_256,
-		TYPE_STR,
-		TYPE_END
-	}     type;
+	e_type type;
 	void  *work;
 } T_SUSPEND_W;
 

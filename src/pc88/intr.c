@@ -44,26 +44,12 @@ int wait_by_sleep = TRUE;				/* ウエイト調整時 sleep する */
 #define SOUND_CLOCK_MHZ			sound_clock_mhz
 #define VSYNC_FREQ_HZ			vsync_freq_hz
 
-#if 1 /* VSYNC割り込みと VRTCのタイミングをずらしてみる */
+/* VRTC信号とVRTC割込発生のズレ(ステート数) */
+/* 0 でズレなし。 ver 0.6.2 - 0.7.3 は、 30 (8HMzの場合は60) 相当だった */
+#define VRTC_INTR_DELAY			(1)
 
-/* 0.2ライン (30ステートぐらい) だけずらす …… なんか違う？ */
-
-#define VRTC_TOP				((  47.8 ) /448.0)
-#define VRTC_DISP				(( 400.0 ) /448.0)
-#define VRTC_BOTTOM				((  0.2 ) /448.0)
-
-/* 7ラインずらす?? これも違う？ */
-/*
-#define VRTC_TOP				((8 + 33)/448.0)
-#define VRTC_DISP				(( 400 ) /448.0)
-#define VRTC_BOTTOM				((  7  ) /448.0)
-*/
-
-#else /* 以下の値で ver0.6.0 以前のタイミングになるはず */
 #define VRTC_TOP				((  48 ) /448.0)
-#define VRTC_DISP				(( 402 ) /448.0)		/* 念のため +2 余分に*/
-#define VRTC_BOTTOM				((   0 ) /448.0)
-#endif
+/*#define VRTC_DISP				(( 400 ) /448.0)*/
 
 #define RTC_FREQ_HZ				(600)
 
@@ -90,9 +76,6 @@ int state_of_vsync =				/* VSYNC 1周期あたりのステート数 */
 
 int no_wait = FALSE;				/* ウエイトなし */
 
-int boost   = 1;					/* ブースト */
-int boost_cnt;
-
 
 int RS232C_flag = FALSE;			/* RS232C */
 static int rs232c_intr_base;
@@ -104,7 +87,6 @@ static int vsync_intr_timer;
 
 int ctrl_vrtc = 1;					/* VRTC (垂直帰線中:1or3 / 表示中:2) */
 static int vrtc_base;
-static int vrtc_base2;
 static int vrtc_timer;
 
 int RTC_flag = FALSE;				/* RTC */
@@ -141,17 +123,11 @@ static void interval_work_init_generic(void)
 {
 	vsync_intr_timer = vsync_intr_base = (int)(CPU_CLOCK / VSYNC_FREQ_HZ);
 	vrtc_timer       = vrtc_base       = (int)(vsync_intr_base * VRTC_TOP);
-	vrtc_base2       = (int)(vsync_intr_base * VRTC_DISP);
 
 	rtc_intr_timer   = rtc_intr_base   = (int)(CPU_CLOCK / RTC_FREQ_HZ);
 
 	state_of_vsync = vsync_intr_base;
 	state_of_cpu   = 0;
-
-	if (boost < 1) {
-		boost = 1;
-	}
-	boost_cnt = 0;
 }
 
 
@@ -211,26 +187,6 @@ void interval_work_set_RS232C(int bps, int framesize)
 
 
 
-void boost_change(int new_val)
-{
-	if (new_val < 0) {
-		new_val = 1;
-	}
-
-	if (boost != new_val) {
-		double rate = (double)new_val / boost;
-
-		sd_A_intr_base  = (int)(sd_A_intr_base  * rate);
-		sd_A_intr_timer = (int)(sd_A_intr_timer * rate);
-		sd_B_intr_base  = (int)(sd_B_intr_base  * rate);
-		sd_B_intr_timer = (int)(sd_B_intr_timer * rate);
-		boost     = new_val;
-		boost_cnt = 0;
-	}
-}
-
-
-
 /***********************************************************************
  * 割り込みに関わる サウンドレジスタ更新時の処理
  ************************************************************************/
@@ -241,13 +197,11 @@ void interval_work_set_TIMER_A(void)
 {
 	sd_A_intr_base  = (int)(TIMER_A_CONST * sound_prescaler * (1024 - sound_TIMER_A)
 							* (CPU_CLOCK_MHZ / SOUND_CLOCK_MHZ));
-	sd_A_intr_base *= boost;
 }
 void interval_work_set_TIMER_B(void)
 {
 	sd_B_intr_base  = (int)(TIMER_B_CONST * sound_prescaler * (256 - sound_TIMER_B)
 							* (CPU_CLOCK_MHZ / SOUND_CLOCK_MHZ));
-	sd_B_intr_base *= boost;
 }
 
 /*
@@ -392,17 +346,11 @@ static void vsync(void)
 {
 	vsync_count++; /* test (計測用) */
 
-	if (++ boost_cnt >= boost) {
-		boost_cnt = 0;
-	}
-
-	if (boost_cnt == 0) {
 #ifdef  DRAW_SCREEN_AT_VSYNC_START
-		CPU_BREAKOFF();
-		quasi88_event_flags |= EVENT_AUDIO_UPDATE;
-		quasi88_event_flags |= EVENT_FRAME_UPDATE;
+	CPU_BREAKOFF();
+	quasi88_event_flags |= EVENT_AUDIO_UPDATE;
+	quasi88_event_flags |= EVENT_FRAME_UPDATE;
 #endif
-	}
 
 	/* DMA消費サイクル数セット */
 	SET_DMA_WAIT_COUNT();
@@ -479,49 +427,56 @@ void main_INT_update(void)
 
 	vsync_intr_timer -= z80main_cpu.state0;
 	if (vsync_intr_timer < 0) {
-		vsync_intr_timer += vsync_intr_base;
-
 		/* ウエイト、表示、入力 */
 		vsync();
-		if (intr_vsync_enable) {
-			/* VSYNC割り込み */
-			VSYNC_flag = TRUE;
-		}
 
-		ctrl_vrtc  = 1;
-		vrtc_timer = vrtc_base + z80main_cpu.state0;
+#if (VRTC_INTR_DELAY)
+		ctrl_vrtc = 0;
+#else
+		ctrl_vrtc = 1;
+		vrtc_timer = vsync_intr_timer + z80main_cpu.state0;
+#endif
+		vsync_intr_timer += vsync_intr_base;
 	}
 	icount = MIN(icount, vsync_intr_timer);
 
 
 	/* VRTC 処理 */
 
-	if (ctrl_vrtc == 1) {
-		/* VSYNC から 一定時間経過で、表示期間へ  */
-		vrtc_timer -= z80main_cpu.state0;
-		if (vrtc_timer < 0) {
-			ctrl_vrtc = 2;
-			vrtc_timer += vrtc_base2;
-
-#ifndef DRAW_SCREEN_AT_VSYNC_START
-			if (boost_cnt == 0) {
-				CPU_BREAKOFF();
-				quasi88_event_flags |= EVENT_AUDIO_UPDATE;
-				quasi88_event_flags |= EVENT_FRAME_UPDATE;
-			}
-#endif
-		}
-
-	} else if (ctrl_vrtc == 2) {
-		/* 表示期間から一定時間経過で、VBLANK期間へ */
+	switch (ctrl_vrtc) {
+	case 0:
+		vrtc_timer = VRTC_INTR_DELAY;
+		ctrl_vrtc = 1;
+		break;
+	case 1:
 		vrtc_timer -= z80main_cpu.state0;
 		if (vrtc_timer < 0) {
 			ctrl_vrtc = 3;
-			vrtc_timer = 0xffff; /* 念のため */
+			vrtc_timer += vrtc_base;
+			if (intr_vsync_enable) {
+				/* VSYNC割り込み */
+				VSYNC_flag = TRUE;
+			}
 		}
+		break;
+	case 3:
+		vrtc_timer -= z80main_cpu.state0;
+		if (vrtc_timer < 0) {
+			ctrl_vrtc = 2;
+
+#ifndef DRAW_SCREEN_AT_VSYNC_START
+			CPU_BREAKOFF();
+			quasi88_event_flags |= EVENT_AUDIO_UPDATE;
+			quasi88_event_flags |= EVENT_FRAME_UPDATE;
+#endif
+		}
+		break;
+	default:
+		ctrl_vrtc = 2;
+		break;
 	}
 
-	if (ctrl_vrtc < 3) {
+	if (ctrl_vrtc != 2) {
 		icount = MIN(icount, vrtc_timer);
 	}
 
@@ -778,6 +733,8 @@ int main_INT_chk(void)
  ************************************************************************/
 static int wait_by_sleep_dummy;
 static int wait_sleep_min_us_dummy;
+static int boost_dummy;
+static int vrtc_base2_dummy;
 
 #define SID		"INTR"
 #define SID2	"INT2"
@@ -838,7 +795,7 @@ static T_SUSPEND_W suspend_intr_work[] = {
 };
 
 static T_SUSPEND_W suspend_intr_work2[] = {
-	{ TYPE_INT,   &vrtc_base2,            },
+	{ TYPE_INT,   &vrtc_base2_dummy,      },
 	{ TYPE_END,   0                       },
 };
 
@@ -849,7 +806,7 @@ static T_SUSPEND_W suspend_intr_work3[] = {
 };
 
 static T_SUSPEND_W suspend_intr_work4[] = {
-	{ TYPE_INT,   &boost,                 },
+	{ TYPE_INT,   &boost_dummy,           },
 	{ TYPE_END,   0                       },
 };
 
@@ -877,8 +834,6 @@ int statesave_intr(void)
 
 int stateload_intr(void)
 {
-	boost_cnt = 0;
-
 	if (stateload_table(SID, suspend_intr_work) != STATE_OK) {
 		return FALSE;
 	}
@@ -919,7 +874,6 @@ int stateload_intr(void)
 
 
 NOT_HAVE_SID2:
-	vrtc_base2 = (int)(vsync_intr_base * VRTC_DISP);
 	if (ctrl_vrtc == 0) {
 		ctrl_vrtc = 2;
 	}
@@ -938,7 +892,6 @@ NOT_HAVE_SID3:
 
 
 NOT_HAVE_SID4:
-	boost = 1;
 
 
 	return TRUE;

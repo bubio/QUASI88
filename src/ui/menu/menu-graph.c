@@ -23,6 +23,9 @@
 #include "menu-graph-message.h"
 
 
+/* フルスクリーン切替チェックボタン */
+Q8tkWidget *menu_fullscreen_widget;
+
 /*----------------------------------------------------------------------*/
 /* フレームレート */
 static int get_graph_frate(void)
@@ -140,10 +143,11 @@ static Q8tkWidget *menu_graph_resize(void)
 			/* 空行 */
 			PACK_LABEL(vbox, "");
 
-			PACK_CHECK_BUTTON(vbox,
-							  GET_LABEL(data_graph_fullscreen, 0),
-							  get_graph_fullscreen(),
-							  cb_graph_fullscreen, NULL);
+			menu_fullscreen_widget =
+				PACK_CHECK_BUTTON(vbox,
+								  GET_LABEL(data_graph_fullscreen, 0),
+								  get_graph_fullscreen(),
+								  cb_graph_fullscreen, NULL);
 		}
 	}
 
@@ -245,26 +249,34 @@ static void cb_graph_pcg(Q8tkWidget *widget, void *p)
 
 static int get_graph_font(void)
 {
-	return font_type;
+	return font_kind;
 }
 static void cb_graph_font(UNUSED_WIDGET, void *p)
 {
-	font_type = P2INT(p);
+	font_kind = P2INT(p);
 	memory_set_font();
+}
+
+static int get_graph_hidetext(void)
+{
+	return hide_text_screen;
+}
+static void cb_graph_hidetext(Q8tkWidget *widget, UNUSED_PARM)
+{
+	hide_text_screen = (Q8TK_TOGGLE_BUTTON(widget)->active) ? TRUE : FALSE;
 }
 
 static Q8tkWidget *menu_graph_pcg(void)
 {
 	Q8tkWidget *vbox, *b;
 	const t_menulabel *l = data_graph;
-	t_menudata data_graph_font[3];
+	t_menudata data_graph_font[2];
 
 
 	/* フォント選択ウィジット生成 (PCG有無により、insensitive になる) */
 	{
 		data_graph_font[0] = data_graph_font1[(font_loaded & 1) ? 1 : 0];
 		data_graph_font[1] = data_graph_font2[(font_loaded & 2) ? 1 : 0];
-		data_graph_font[2] = data_graph_font3[(font_loaded & 4) ? 1 : 0];
 
 		b = PACK_VBOX(NULL);
 		{
@@ -290,6 +302,12 @@ static Q8tkWidget *menu_graph_pcg(void)
 		}
 
 		q8tk_box_pack_start(vbox, graph_font_widget);
+
+		/* テキスト表示を隠すチェックボックス */
+		PACK_CHECK_BUTTON(vbox,
+						  GET_LABEL(data_graph_hidetext, 0),
+						  get_graph_hidetext(),
+						  cb_graph_hidetext, NULL);
 	}
 
 	return vbox;

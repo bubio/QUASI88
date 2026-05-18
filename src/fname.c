@@ -251,7 +251,7 @@ void    imagefile_all_close(void)
 
 void imagefile_status(void)
 {
-	int ctrl[2];
+	int ctrl[3];
 
 	if (disk_image_exist(DRIVE_1)) {
 		ctrl[0] = CTRL_CHG_DRIVE1_IMAGE;
@@ -265,10 +265,18 @@ void imagefile_status(void)
 		ctrl[1] = CTRL_CHG_DRIVE2_EMPTY;
 	}
 
+	if ((ctrl[0] == CTRL_CHG_DRIVE1_IMAGE) ||
+		(ctrl[1] == CTRL_CHG_DRIVE2_IMAGE)) {
+		ctrl[2] = CTRL_CHG_DRIVEANY_IMAGE;
+	} else {
+		ctrl[2] = CTRL_CHG_DRIVEANY_EMPTY;
+	}
+
 	statusbar_image_name();
 
-	submenu_controll(ctrl[0]);
-	submenu_controll(ctrl[1]);
+	toolbar_controll(ctrl[0]);
+	toolbar_controll(ctrl[1]);
+	toolbar_controll(ctrl[2]);
 }
 
 

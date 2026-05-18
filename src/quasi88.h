@@ -145,7 +145,9 @@ void quasi88_menu(void);
 void quasi88_pause(void);
 void quasi88_askreset(void);
 void quasi88_askspeedup(void);
-void quasi88_askdiskchange(void);
+void quasi88_askopenfile(void);
+void quasi88_askselectdisk(void);
+void quasi88_askstatefile(void);
 void quasi88_askquit(void);
 void quasi88_monitor(void);
 void quasi88_debug(void);
@@ -157,7 +159,9 @@ int  quasi88_is_fullmenu(void);
 int  quasi88_is_pause(void);
 int  quasi88_is_askreset(void);
 int  quasi88_is_askspeedup(void);
-int  quasi88_is_askdiskchange(void);
+int  quasi88_is_askopenfile(void);
+int  quasi88_is_askselectdisk(void);
+int  quasi88_is_askstatefile(void);
 int  quasi88_is_askquit(void);
 int  quasi88_get_menu_mode(void);
 void quasi88_set_status(void);
@@ -188,7 +192,9 @@ enum {
 	CTRL_MODE_MENU_PAUSE,
 	CTRL_MODE_MENU_ASKRESET,
 	CTRL_MODE_MENU_ASKSPEEDUP,
-	CTRL_MODE_MENU_ASKDISKCHANGE,
+	CTRL_MODE_MENU_ASKOPENFILE,
+	CTRL_MODE_MENU_ASKSELECTDISK,
+	CTRL_MODE_MENU_ASKSTATEFILE,
 	CTRL_MODE_MENU_ASKQUIT,
 
 	CTRL_CHG_SUBCPU,
@@ -207,6 +213,8 @@ enum {
 	CTRL_CHG_DRIVE1_IMAGE,
 	CTRL_CHG_DRIVE2_EMPTY,
 	CTRL_CHG_DRIVE2_IMAGE,
+	CTRL_CHG_DRIVEANY_EMPTY,
+	CTRL_CHG_DRIVEANY_IMAGE,
 	CTRL_CHG_CAPSLOCK,
 	CTRL_CHG_KANALOCK,
 	CTRL_CHG_ROMAJILOCK,

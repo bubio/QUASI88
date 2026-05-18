@@ -54,6 +54,7 @@ int  screen_dirty_frame;					/* 全領域 更新 */
 int frameskip_rate = DEFAULT_FRAMESKIP;		/* 画面表示の更新間隔 */
 int monitor_analog = TRUE;					/* アナログモニター */
 int use_auto_skip  = TRUE;					/* 自動フレームスキップ */
+int hide_text_screen = FALSE;				/* テキスト画面非表示 */
 
 
 int use_interlace = 0;						/* インターレース表示 */
@@ -228,8 +229,8 @@ int screen_init(void)
 		clear_all_screen();
 		put_image_all();
 
-		submenu_controll(CTRL_SETUP_FULLSCREEN);
-		submenu_controll(CTRL_SETUP_KEYBOARD);
+		toolbar_controll(CTRL_SETUP_FULLSCREEN);
+		toolbar_controll(CTRL_SETUP_KEYBOARD);
 		return TRUE;
 	} else {
 		return FALSE;
@@ -845,7 +846,7 @@ void quasi88_cfg_set_interlace(int interlace_mode)
 	set_screen_dirty_frame();			/* 全領域 初期化(==更新) */
 	frameskip_counter_reset();			/* 次回描画 */
 
-	submenu_controll(CTRL_CHG_INTERLACE);
+	toolbar_controll(CTRL_CHG_INTERLACE);
 }
 
 
@@ -866,10 +867,10 @@ void quasi88_cfg_set_toolbar(int show)
 	if (show_toolbar != show) {
 		show_toolbar = show;
 		if (open_window_or_exit()) {
-			submenu_controll(CTRL_CHG_FULLSCREEN);
+			toolbar_controll(CTRL_CHG_FULLSCREEN);
 		}
 
-		submenu_controll(CTRL_CHG_TOOLBAR);
+		toolbar_controll(CTRL_CHG_TOOLBAR);
 	}
 }
 
@@ -885,10 +886,10 @@ void quasi88_cfg_set_statusbar(int show)
 	if (show_statusbar != show) {
 		show_statusbar = show;
 		if (open_window_or_exit()) {
-			submenu_controll(CTRL_CHG_FULLSCREEN);
+			toolbar_controll(CTRL_CHG_FULLSCREEN);
 		}
 
-		submenu_controll(CTRL_CHG_STATUSBAR);
+		toolbar_controll(CTRL_CHG_STATUSBAR);
 	}
 }
 
@@ -917,7 +918,7 @@ void quasi88_cfg_set_fullscreen(int fullscreen)
 
 	if (now_fullscreen != use_fullscreen) {
 		if (open_window_or_exit()) {
-			submenu_controll(CTRL_CHG_FULLSCREEN);
+			toolbar_controll(CTRL_CHG_FULLSCREEN);
 		}
 	}
 }
@@ -947,10 +948,10 @@ void quasi88_cfg_set_size(int new_size)
 
 	if (now_screen_size != screen_size) {
 		if (open_window_or_exit()) {
-			submenu_controll(CTRL_CHG_FULLSCREEN);
+			toolbar_controll(CTRL_CHG_FULLSCREEN);
 		}
 
-		submenu_controll(CTRL_CHG_SCREENSIZE);
+		toolbar_controll(CTRL_CHG_SCREENSIZE);
 	}
 }
 
@@ -962,10 +963,10 @@ void quasi88_cfg_set_size_large(void)
 	}
 
 	if (open_window_or_exit()) {
-		submenu_controll(CTRL_CHG_FULLSCREEN);
+		toolbar_controll(CTRL_CHG_FULLSCREEN);
 	}
 
-	submenu_controll(CTRL_CHG_SCREENSIZE);
+	toolbar_controll(CTRL_CHG_SCREENSIZE);
 }
 
 /* 画面サイズを小さくする */
@@ -976,10 +977,10 @@ void    quasi88_cfg_set_size_small(void)
 	}
 
 	if (open_window_or_exit()) {
-		submenu_controll(CTRL_CHG_FULLSCREEN);
+		toolbar_controll(CTRL_CHG_FULLSCREEN);
 	}
 
-	submenu_controll(CTRL_CHG_SCREENSIZE);
+	toolbar_controll(CTRL_CHG_SCREENSIZE);
 }
 
 
@@ -987,7 +988,7 @@ void    quasi88_cfg_set_size_small(void)
 void    quasi88_cfg_reset_window(void)
 {
 	if (open_window_or_exit()) {
-		submenu_controll(CTRL_CHG_FULLSCREEN);
+		toolbar_controll(CTRL_CHG_FULLSCREEN);
 	}
 }
 
@@ -1185,17 +1186,22 @@ void quasi88_touch_as_mouse(int start)
 /* タッチキーボードの操作可否を返す */
 int quasi88_cfg_can_touchkey(void)
 {
-	if (now_fullscreen) {
-		return spec->touchkey_fullscreen;
-	} else {
-		return spec->touchkey_window;
+	if (spec) {
+		if (now_fullscreen) {
+			return spec->touchkey_fullscreen;
+		} else {
+			return spec->touchkey_window;
+		}
 	}
+	return FALSE;
 }
 
 void quasi88_notify_touchkey(int request)
 {
-	if (spec->touchkey_notify) {
-		(spec->touchkey_notify)(request);
+	if (spec) {
+		if (spec->touchkey_notify) {
+			(spec->touchkey_notify)(request);
+		}
 	}
 }
 

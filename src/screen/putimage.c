@@ -452,6 +452,8 @@ void    screen_update(void)
 
 	if (is_exec) {
 		profiler_lapse(PROF_LAPSE_BLIT);
+	} else {
+		profiler_lapse(PROF_LAPSE_SKIP);
 	}
 
 
@@ -692,6 +694,8 @@ void    screen_update(void)
 
 	if (is_exec) {
 		profiler_lapse(PROF_LAPSE_VIDEO);
+	} else {
+		profiler_lapse(PROF_LAPSE_SKIP);
 	}
 
 	if (update_info.dont_frameskip) {
@@ -856,7 +860,7 @@ void    quasi88_cfg_set_frameskip_rate(int rate)
 		statusbar_message(STATUS_INFO, str, 0);
 		/* 変更した後は、しばらく画面にフレームレートを表示させる */
 
-		submenu_controll(CTRL_CHG_FRAMERATE);
+		toolbar_controll(CTRL_CHG_FRAMERATE);
 	}
 }
 

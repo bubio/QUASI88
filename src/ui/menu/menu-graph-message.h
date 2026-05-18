@@ -70,25 +70,17 @@ static const t_menudata data_graph_pcg[] = {
 	{ { " Exist ",		" あり  ",	}, TRUE,	},
 };
 
-#if 0
-static const t_menudata data_graph_font[] = {
-	{ { " Standard Font ",		" 標準フォント ",	}, 0,	},
-	{ { " 2nd Font ",			" 第２フォント ",	}, 1,	},
-	{ { " 3rd Font ",			" 第３フォント ",	}, 2,	},
-};
-#else
 static const t_menudata data_graph_font1[2] = {
 	{ { " Built-in Font ",		" 内 蔵 フォント ",	}, 0,	},
 	{ { " Standard Font ",		" 標 準 フォント ",	}, 0,	},
 };
 static const t_menudata data_graph_font2[2] = {
 	{ { " Hiragana Font ",		" 平仮名フォント ",	}, 1,	},
-	{ { " 2nd Font ",			" 第 ２ フォント ",	}, 1,	},
+	{ { " 2nd Font ",			" 代 替 フォント ",	}, 1,	},
 };
-static const t_menudata data_graph_font3[2] = {
-	{ { " Transparent Font ",	" 透 明 フォント ",	}, 2,	},
-	{ { " 3rd Font ",			" 第 ３ フォント ",	}, 2,	},
+
+static const t_menulabel data_graph_hidetext[] = {
+	{ { "Hide text screen",	"テキスト表示を隠す",	}, },
 };
-#endif
 
 #endif /* MENU_GRAPH_MESSAGE_H_INCLUDED */

@@ -23,9 +23,6 @@ extern int wait_by_sleep;				/* ウエイト調整時 sleep する */
 
 extern int no_wait;						/* ウエイトなし */
 
-extern int boost;						/* ブースト */
-extern int boost_cnt;					/* */
-
 
 
 
@@ -52,8 +49,6 @@ void interval_work_set_EOS(int length);
 
 void change_sound_flags(int port);
 void change_sound_prescaler(int new_prescaler);
-
-void boost_change(int new_val);
 
 
 void main_INT_init(void);

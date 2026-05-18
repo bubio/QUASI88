@@ -822,12 +822,7 @@ int sound_scalebufferpos(int value)
 #else		/* QUASI88 */
 int sound_scalebufferpos(int value)
 {
-#if 0	/* ~ ver 0.6.2 */
 	int result = (int)((double)(state_of_cpu + z80main_cpu.state0)/state_of_vsync * value);
-#else	/* ver 0.6.3 ~ */
-	int result = (int)((double)(state_of_cpu + z80main_cpu.state0 + (boost_cnt * state_of_vsync) )
-								   	/ (boost * state_of_vsync) * value);
-#endif
 	return (result < value) ? result : value;
 }
 #endif		/* QUASI88 */

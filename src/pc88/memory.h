@@ -10,7 +10,7 @@ extern int use_jisho_rom;				/* 辞書ROMを使う */
 extern int use_built_in_font;			/* 内蔵フォントを使う */
 extern int use_pcg;						/* PCG-8100サポート */
 extern int pcg_level;					/* PCG-8100互換レベル */
-extern int font_type;					/* フォントの種類 */
+extern int font_kind;					/* フォントの種類 */
 extern int font_loaded;					/* ロードしたフォント種 */
 
 
@@ -40,7 +40,6 @@ extern byte *font_rom;					/* フォントイメージ */
 extern byte *font_pcg;					/* フォントイメージ(PCG) */
 extern byte *font_mem;					/* フォントイメージ(fix) */
 extern byte *font_mem2;					/* フォントイメージ(2nd) */
-extern byte *font_mem3;					/* フォントイメージ(3rd) */
 
 
 /* イリーガルな方法でメモリアクセスする */

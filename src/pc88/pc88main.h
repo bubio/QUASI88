@@ -120,6 +120,8 @@ extern int use_siomouse;        /* 真で、シリアルマウスあり     */
 
 /**** 関数 ****/
 
+void    pc88main_cpu_init(void);
+void	pc88main_cpu_update(void);
 void    pc88main_init(int init);
 void    pc88main_term(void);
 void    pc88main_bus_setup(void);

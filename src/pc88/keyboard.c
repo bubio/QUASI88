@@ -125,11 +125,6 @@ int function_f[ 1 + 20 ] =				/* ファンクションキーの機能 */
 };
 
 
-int    fn_max_speed = 1600;
-double fn_max_clock = CONST_4MHZ_CLOCK * 16;
-int    fn_max_boost = 16;
-
-
 int romaji_type = 0;					/* ローマ字変換のタイプ */
 
 
@@ -1479,7 +1474,7 @@ void quasi88_tgl_key_numlock(void)
 	numlock_emu ^= 1;
 	assign_key_numlock_tenkey();
 
-	submenu_controll(CTRL_CHG_NUMLOCK);
+	toolbar_controll(CTRL_CHG_NUMLOCK);
 
 	quasi88_notify_touchkey((numlock_emu) ?
 							TOUCHKEY_NOTIFY_REQ_NUM_ON :
@@ -1502,7 +1497,7 @@ void quasi88_tgl_key_caps(void)
 {
 	KEY88_TOGGLE(KEY88_CAPS);
 
-	submenu_controll(CTRL_CHG_CAPSLOCK);
+	toolbar_controll(CTRL_CHG_CAPSLOCK);
 
 	quasi88_notify_touchkey(IS_KEY88_PRESS(KEY88_CAPS) ?
 							TOUCHKEY_NOTIFY_REQ_CAPS_ON :
@@ -1526,7 +1521,7 @@ void quasi88_tgl_key_kana(void)
 	KEY88_TOGGLE(KEY88_KANA);
 	romaji_input_mode = FALSE;
 
-	submenu_controll(CTRL_CHG_KANALOCK);
+	toolbar_controll(CTRL_CHG_KANALOCK);
 
 	quasi88_notify_touchkey(IS_KEY88_PRESS(KEY88_KANA) ?
 							TOUCHKEY_NOTIFY_REQ_KANA_ON :
@@ -1556,7 +1551,7 @@ void quasi88_tgl_key_romaji(void)
 		romaji_clear();
 	}
 
-	submenu_controll(CTRL_CHG_ROMAJILOCK);
+	toolbar_controll(CTRL_CHG_ROMAJILOCK);
 
 	quasi88_notify_touchkey(IS_KEY88_PRESS(KEY88_KANA) ?
 							TOUCHKEY_NOTIFY_REQ_KANA_ON :
@@ -1806,9 +1801,6 @@ int quasi88_get_last_key_function(int code)
 static void change_framerate(int sign);
 static void change_volume(int sign);
 static void change_wait(int sign);
-static void change_max_speed(int new_speed);
-static void change_max_clock(double new_clock);
-static void change_max_boost(int new_boost);
 
 static int do_func(int func, int on)
 {
@@ -1959,19 +1951,13 @@ static int do_func(int func, int on)
 		return 0;
 
 	case FN_MAX_SPEED:
-		if (on) {
-			change_max_speed(fn_max_speed);
-		}
+		/* 削除予定 */
 		return 0;
 	case FN_MAX_CLOCK:
-		if (on) {
-			change_max_clock(fn_max_clock);
-		}
+		/* 削除予定 */
 		return 0;
 	case FN_MAX_BOOST:
-		if (on) {
-			change_max_boost(fn_max_boost);
-		}
+		/* 削除予定 */
 		return 0;
 
 	case FN_ROMAJI_KEY:
@@ -2132,68 +2118,6 @@ static void change_wait(int sign)
 
 		quasi88_cfg_set_wait_rate(w);
 	}
-}
-
-
-/*
- * 速度変更 (speed/clock/boost)
- */
-static void change_max_speed(int new_speed)
-{
-	char str[32];
-
-	if (!(5 <= new_speed || new_speed <= 5000)) {
-		new_speed = 1600;
-	}
-
-	if (wait_rate < new_speed) {
-		wait_rate = new_speed;
-	} else {
-		wait_rate = 100;
-	}
-
-	wait_vsync_switch();
-
-	no_wait = 0;
-
-	sprintf(str, "WAIT  %4d[%%]", wait_rate);
-	statusbar_message(STATUS_INFO, str, 0);
-}
-static void change_max_clock(double new_clock)
-{
-	double def_clock = (boot_clock_4mhz ? CONST_4MHZ_CLOCK : CONST_8MHZ_CLOCK);
-	char str[32];
-
-	if (!(0.1 <= new_clock && new_clock < 1000.0)) {
-		new_clock = CONST_4MHZ_CLOCK * 16;
-	}
-
-	if (cpu_clock_mhz < new_clock) {
-		cpu_clock_mhz = new_clock;
-	} else {
-		cpu_clock_mhz = def_clock;
-	}
-	interval_work_init_all();
-
-	sprintf(str, "CLOCK %8.4f[MHz]", cpu_clock_mhz);
-	statusbar_message(STATUS_INFO, str, 0);
-}
-static void change_max_boost(int new_boost)
-{
-	char str[32];
-
-	if (!(1 <= new_boost || new_boost <= 100)) {
-		new_boost = 16;
-	}
-
-	if (boost < new_boost) {
-		boost_change(new_boost);
-	} else {
-		boost_change(1);
-	}
-
-	sprintf(str, "BOOST [x%2d]", boost);
-	statusbar_message(STATUS_INFO, str, 0);
 }
 
 
@@ -2424,7 +2348,7 @@ void quasi88_set_mouse_mode(int mode)
 	mouse_mode = mode;
 	assign_key_mouse_joystick();
 
-	submenu_controll(CTRL_CHG_MOUSE);
+	toolbar_controll(CTRL_CHG_MOUSE);
 }
 
 int quasi88_now_cursor_key_mode(void)
@@ -2437,7 +2361,7 @@ void quasi88_set_cursor_key_mode(int mode)
 	cursor_key_mode = mode;
 	assign_key_cursorkey();
 
-	submenu_controll(CTRL_CHG_CURSOR);
+	toolbar_controll(CTRL_CHG_CURSOR);
 }
 
 

@@ -51,8 +51,8 @@ enum {
 	DATA_TOP_MONITOR_BTN
 };
 static const t_menulabel data_top_monitor[] = {
-	{ { "            ",	"            ",	} },
-	{ { " MONITOR  ",	" モニター ",	} },
+	{ { "          ",	"          ",	} },
+	{ { "MONITOR ",		"モニター",		} },
 };
 
 

@@ -25,7 +25,7 @@ static void cb_quit(UNUSED_WIDGET, UNUSED_PARM)
 	quasi88_quit();
 }
 
-void quit_top(void)
+void askquit_top(void)
 {
 	Q8tkWidget *d, *a, *l;
 

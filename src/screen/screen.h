@@ -74,6 +74,7 @@ extern int  screen_dirty_frame;					/* 全領域 更新 */
 extern int frameskip_rate;					/* 画面表示の更新間隔 */
 extern int monitor_analog;					/* アナログモニター */
 extern int use_auto_skip;					/* 自動フレームスキップ */
+extern int hide_text_screen;				/* テキスト画面非表示 */
 
 
 

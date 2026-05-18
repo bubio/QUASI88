@@ -30,7 +30,7 @@ int use_jisho_rom = DEFAULT_JISHO;		/* 辞書ROMを使う */
 int use_built_in_font = FALSE;			/* 内蔵フォントを使う */
 int use_pcg           = FALSE;			/* PCG-8100サポート */
 int pcg_level         = 0;				/* PCG-8100互換レベル */
-int font_type         = 0;				/* フォントの種類 */
+int font_kind         = 0;				/* フォントの種類 */
 int font_loaded       = 0;				/* ロードしたフォント種 */
 
 int memory_wait = FALSE;				/* メモリウェイトの有無 */
@@ -113,7 +113,6 @@ bit8 *font_rom;							/* フォントイメージROM [8*256*2] */
 bit8 *font_pcg;							/* フォントイメージROM(PCG用) */
 bit8 *font_mem;							/* フォントイメージROM(固定 ) */
 bit8 *font_mem2;						/* フォントイメージROM(固定2) */
-bit8 *font_mem3;						/* フォントイメージROM(固定3) */
 
 byte *dummy_rom;						/* ダミーROM (32KB) */
 byte *dummy_ram;						/* ダミーRAM (32KB) */
@@ -362,7 +361,6 @@ int memory_allocate(void)
 		font_pcg    = (byte *)           mem_alloc(sizeof(byte) * 8 * 256 * 2);
 		font_mem    = (byte *)           mem_alloc(sizeof(byte) * 8 * 256 * 2);
 		font_mem2   = (byte *)           mem_alloc(sizeof(byte) * 8 * 256 * 2);
-		font_mem3   = (byte *)           mem_alloc(sizeof(byte) * 8 * 256 * 2);
 	}
 	if (mem_alloc_finish() == FALSE) {
 		return 0;
@@ -541,50 +539,7 @@ int memory_allocate(void)
 	}
 
 
-	/* 第3フォントイメージをファイルから読み込む */
-
-	if (use_built_in_font) {
-
-		memset(&font_mem3[0], 0, FONT_SZ * 2);
-
-	} else {
-
-		size = load_rom(rom_list[FONT3_ROM], font_mem3, FONT_SZ * 2, DISP_IF_EXIST);
-		font_loaded |= 4;
-
-		if (verbose_proc) {
-			if (size == -1) ;
-			else if (size == FONT_SZ * 2) {
-				printf("OK(with semi-graphic-font)\n");
-			} else if (size == FONT_SZ) {
-				printf("OK\n");
-			} else                        {
-				printf("FAILED\n");
-			}
-		}
-
-		if (size == FONT_SZ * 2) {
-			;
-		} else {
-			if (size == FONT_SZ) {
-				memcpy(&font_mem3[0x100 * 8], &built_in_font_graph[0], 0x100 * 8);
-
-			} else {
-				/* 存在しない場合は、透明フォントを使用 */
-				memset(&font_mem3[0], 0, FONT_SZ * 2);
-				font_loaded &= ~4;
-			}
-		}
-
-	}
-
-
-	/* フォントの文字コード 0 は絶対に空白 */
-	memset(&font_mem[0],  0, 8);
-	memset(&font_mem2[0], 0, 8);
-	memset(&font_mem3[0], 0, 8);
-
-
+	/* フォント初期化 */
 	memory_reset_font();
 
 
@@ -731,12 +686,13 @@ void memory_set_font(void)
 	if (use_pcg) {
 		font_rom = font_pcg;
 	} else {
-		if (font_type == 0) {
+		if (font_kind == 0) {
 			font_rom = font_mem;
-		} else if (font_type == 1) {
+		} else if (font_kind == 1) {
 			font_rom = font_mem2;
-		} else if (font_type == 2) {
-			font_rom = font_mem3;
+		} else {
+			/* assert */
+			font_rom = font_mem;
 		}
 	}
 }
@@ -785,9 +741,6 @@ void memory_free(void)
 	if (font_mem2) {
 		free(font_mem2);
 	}
-	if (font_mem3) {
-		free(font_mem3);
-	}
 
 	if (use_extram) {
 		free(ext_ram);
@@ -814,7 +767,7 @@ void quasi88_set_use_pcg(int use)
 {
 	use_pcg = use;
 
-	submenu_controll(CTRL_CHG_PCG);
+	toolbar_controll(CTRL_CHG_PCG);
 }
 
 

@@ -30,6 +30,7 @@
 #include "file-op.h"
 #include "drive.h"
 #include "menu.h"
+#include "toolbar.h"
 #include "statusbar.h"
 #include "monitor.h"
 #include "pause.h"
@@ -70,9 +71,6 @@ static const struct {
 	{ FN_CAPS,        "CAPS",        },
 	{ FN_STATUS,      "STATUS",      },
 	{ FN_MENU,        "MENU",        },
-	{ FN_MAX_SPEED,   "MAX-SPEED",   },
-	{ FN_MAX_CLOCK,   "MAX-CLOCK",   },
-	{ FN_MAX_BOOST,   "MAX-BOOST",   },
 };
 
 
@@ -569,7 +567,7 @@ static const T_CONFIG_TABLE option_table[] = {
 
 	/*  31..60 : エミュレーション設定オプション */
 
-	{  31, "cpu",			X_INT,	&cpu_timing,		0,				2,				0,				OPT_SAVE	},
+	{  31, "cpu",			X_INT,	&cpu_timing,		-1,				2,				0,				OPT_SAVE	},
 	{  32, "cpu1count",		X_INT,	&CPU_1_COUNT,		1,				65536,			0,				0			},
 	{  33, "cpu2us",		X_INT,	&cpu_slice_us,		1,				1000,			0,				0			},
 	{  34, "fdc_wait",		X_FIX,	&fdc_wait,			1,				0,				0,				OPT_SAVE	},
@@ -578,7 +576,7 @@ static const T_CONFIG_TABLE option_table[] = {
 	{  36, "speed",			X_INT,	&wait_rate,			5,				5000,			0,				OPT_SAVE	},
 	{  37, "nowait",		X_FIX,	&no_wait,			TRUE,			0,				0,				OPT_SAVE	},
 	{  37, "wait",			X_FIX,	&no_wait,			FALSE,			0,				0,				OPT_SAVE	},
-	{  38, "boost",			X_INT,	&boost,				1,				100,			0,				OPT_SAVE	},
+	{  38, "boost",			X_INV,	&invalid_arg,		0,				0,				0,				0			},
 	{  39, "cmt_intr",		X_FIX,	&cmt_intr,			TRUE,			0,				0,				OPT_SAVE	},
 	{  39, "cmt_poll",		X_FIX,	&cmt_intr,			FALSE,			0,				0,				OPT_SAVE	},
 	{  40, "cmt_speed",		X_INT,	&cmt_speed,			0,				0xffff,			0,				OPT_SAVE	},
@@ -629,6 +627,7 @@ static const T_CONFIG_TABLE option_table[] = {
 	{  75, "nostatusimage",	X_FIX,	&status_imagename,	FALSE,			0,				0,				OPT_SAVE	},
 	{  76, "tool",			X_FIX,	&show_toolbar,		TRUE,			0,				0,				OPT_SAVE	},
 	{  76, "notool",		X_FIX,	&show_toolbar,		FALSE,			0,				0,				OPT_SAVE	},
+	{  77, "toolbar_layout",X_STR,	&toolbar_layout,	0,				0,				0,				0			},
 
 	/*  91..160: キー設定オプション */
 
@@ -676,9 +675,9 @@ static const T_CONFIG_TABLE option_table[] = {
 	{ 127, "f10",			X_STR,	NULL,				0,				0,				o_setfn_10,		save_fn		},
 	{ 128, "f11",			X_INV,	&invalid_arg,		0,				0,				0,				0			},
 	{ 129, "f12",			X_INV,	&invalid_arg,		0,				0,				0,				0			},
-	{ 130, "fn_max_speed",	X_INT,	&fn_max_speed,		5,				5000,			0,				0			},
-	{ 131, "fn_max_clock",	X_DBL,	&fn_max_clock,		0.001,			65536.0,		0,				0			},
-	{ 132, "fn_max_boost",	X_INT,	&fn_max_boost,		1,				100,			0,				0			},
+	{ 130, "fn_max_speed",	X_INV,	&invalid_arg,		0,				0,				0,				0			},
+	{ 131, "fn_max_clock",	X_INV,	&invalid_arg,		0,				0,				0,				0			},
+	{ 132, "fn_max_boost",	X_INV,	&invalid_arg,		0,				0,				0,				0			},
 	{ 133, "romaji",		X_INT,	&romaji_type,		0,				2,				0,				OPT_SAVE	},
 	{ 134, "kanjikey",		X_NOP,	0,					0,				0,				o_kanjikey,		0			},
 	{ 135, "joyswap",		X_FIX,	&joy_swap_button,	TRUE,			0,				0,				OPT_SAVE	},
@@ -773,6 +772,7 @@ static const T_CONFIG_TABLE option_table[] = {
 	{ 284, "fdc_debug",		X_INT,	&fdc_debug,			0,				3,				0,				0			},
 	{ 285, "main_debug",	X_INT,	&main_debug,		0,				3,				0,				0			},
 	{ 286, "sub_debug",		X_INT,	&sub_debug,			0,				3,				0,				0			},
+	{ 287, "proffile",		X_STR,	&file_profiler,		0,				0,				0,				0			},
 
 
 #if 0

@@ -148,6 +148,7 @@ byte pio_read_AB(int side, int port)
 				CPU_BREAKOFF();
 			}
 			/* FALLTHRU */
+		case -1:
 		case 0: /* 0:そのまま読む*/
 		case 2: /* 2:そのまま読む*/
 			pio_mesAB("PIO Read continuously");
@@ -199,6 +200,7 @@ void pio_write_AB(int side, int port, byte data)
 				CPU_BREAKOFF();
 			}
 			/* FALLTHRU */
+		case -1:
 		case 0: /* 0:そのまま書く*/
 		case 2: /* 2:そのまま書く*/
 			pio_mesAB("PIO Write continuously");
@@ -256,6 +258,7 @@ byte pio_read_C(int side)
 		/* 連続の読みだし */
 
 		switch (cpu_timing) {
+		case -1:
 		case 0: /* 0:CPUを切替え*/
 			select_main_cpu ^= 1;
 			CPU_BREAKOFF(); /* PC-=2 */
@@ -314,6 +317,7 @@ void pio_write_C(int side, byte data)
 	}
 
 	switch (cpu_timing) {
+	case -1:
 	case 0: /* 0:そのまま書く*/
 	case 2: /* 2:そのまま書く*/
 		break;
@@ -349,6 +353,7 @@ void pio_write_C_direct(int side, byte data)
 	pio_C[ side ][ PIO_PORT_CL ].data = data & 0x0f;
 
 	switch (cpu_timing) {
+	case -1:
 	case 0: /*     0:そのまま書く*/
 	case 2: /*     2:そのまま書く*/
 		break;

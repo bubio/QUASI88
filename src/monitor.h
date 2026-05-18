@@ -13,6 +13,8 @@ void set_signal(void);
 #ifdef USE_MONITOR
 void monitor_init(void);
 void monitor_main(void);
+
+void monitor_show_cpu_status(int is_main_cpu);
 #endif
 
 void print_hankaku(FILE *fp, Uchar *str, char npc);

@@ -41,8 +41,8 @@
 #define ATTR_R			0x40			/* 色 Reg */
 #define ATTR_G			0x80			/* 色 Green */
 
-#define MONO_MASK		0x0f
-#define COLOR_MASK		0xe0
+#define ATTR_DECO_MASK		0x0f			/* 装飾のビットマスク */
+#define ATTR_COLOR_MASK		0xe0			/* 色のビットマスク */
 
 /*======================================================================*/
 
@@ -454,28 +454,18 @@ void set_text_display(void)
  *              +---------------------+--+--+--+--+--+--+--+--+
  *      BLINK属性は、点灯時は無視、消灯時はシークレット。
  *
- *      さらに、シークレット属性の場合は 文字コードを 0 に置換する。
- *      (文字コード==0は無条件で空白としているので)
- *              +---------------------+--+--+--+--+--+--+--+--+
- *           → |    ASCII == 0       |Ｇ|Ｒ|Ｂ|０|LO|UP|０|RV|
- *              +---------------------+--+--+--+--+--+--+--+--+
- *              グラフィックモードとシークレット属性も消してもOKだが、
- *              アンダー、アッパーライン、リバースは有効なので残す。
- *
  *======================================================================*/
 
 int    text_attr_flipflop = 0;
 Ushort text_attr_buf[2][2048];			/* アトリビュート情報 */
-/*                       ↑ 80文字x25行=2000で足りるのだが、  */
-/*                          余分に使うので、多めに確保する。  */
+/*                       ↑ 80文字x25行=2000で足りるハズ      */
 
 
 void crtc_make_text_attr(void)
 {
 	int    global_attr  = (ATTR_G | ATTR_R | ATTR_B);
 	int    global_blink = FALSE;
-	int    i, j, tmp;
-	int    column, attr, attr_rest;
+	int    i, j, attr;
 	word   char_start_addr, attr_start_addr;
 	word   c_addr, a_addr;
 	Ushort *text_attr = &text_attr_buf[ text_attr_flipflop ][0];
@@ -486,8 +476,8 @@ void crtc_make_text_attr(void)
 	if (text_display == TEXT_DISABLE) {
 		for (i = 0; i < CRTC_SZ_LINES; i++) {
 			for (j = 0; j < CRTC_SZ_COLUMNS; j++) {
-				/* ASCII=0、白色、装飾なし で初期化する。 */
-				*text_attr ++ = (ATTR_G | ATTR_R | ATTR_B);
+				/* シークレット/白色/装飾なし で初期化する。 */
+				*text_attr ++ = (ATTR_G | ATTR_R | ATTR_B | ATTR_SECRET);
 			}
 		}
 		/* 全画面反転やカーソルもなし。すぐに戻る  */
@@ -496,13 +486,16 @@ void crtc_make_text_attr(void)
 
 
 
-	/* ノン・トランスペアレント型の場合 (1文字置きに、VRAM、ATTR がある) */
-
-	/* ……… ？詳細不明                            */
-	/*      CRTCの設定パターンからして、さらに行の  */
-	/*      最後に属性がある場合もありえそうだが…? */
-
 	if (crtc_attr_non_separate) {
+
+		/* ノン・トランスペアレント型の場合
+		 *		詳細不明。
+		 *		文字コード1バイト、属性1バイトの2バイトで1文字を表現する?
+		 *		(80桁モードの場合、どうなるのだろうか…)
+		 *		カラーモードは指定禁止なので、属性は白黒モードとする。
+		 *		特殊制御文字が有効の場合、アトリビュートエリアも使うようだ?
+		 *		こちらは無視しよう。
+		 */
 
 		char_start_addr = text_dma_addr.W;
 		attr_start_addr = text_dma_addr.W + 1;
@@ -519,8 +512,8 @@ void crtc_make_text_attr(void)
 			for (j = 0; j < CRTC_SZ_COLUMNS; j += 2) {
 				attr = main_ram[ a_addr ];
 				a_addr += 2;
-				global_attr =
-					(global_attr & COLOR_MASK) |
+				global_attr &= (ATTR_COLOR_MASK);
+				global_attr |=
 					((attr &  MONO_GRAPH) >> 3) |
 					((attr & (MONO_UNDER | MONO_UPPER | MONO_REVERSE)) >> 2) |
 					((attr &  MONO_SECRET) << 1);
@@ -535,25 +528,29 @@ void crtc_make_text_attr(void)
 
 			}
 
+			/* 1行飛ばし指定時は次の行をシークレット(他の属性は継続)で埋める */
 			if (crtc_skip_line) {
 				if (++i < crtc_sz_lines) {
 					for (j = 0; j < CRTC_SZ_COLUMNS; j++) {
-						*text_attr ++ =  global_attr | ATTR_SECRET;
+						*text_attr ++ = (global_attr | ATTR_SECRET);
 					}
 				}
 			}
 
 		}
-		/* 残りの行は、SECRET (24行設定対策) */
+
+		/* 残りの行は、シークレット(他の属性は継続)で埋める (24行設定対策) */
 		for (; i < CRTC_SZ_LINES; i++) {
 			for (j = 0; j < CRTC_SZ_COLUMNS; j++) {
-				*text_attr ++ =  global_attr | ATTR_SECRET;
+				*text_attr ++ = (global_attr | ATTR_SECRET);
 			}
 		}
 
 	} else {
 
-		/* トランスペアレント型の場合 (行の最後に、ATTRがある) */
+		/* トランスペアレント型の場合
+		 *		行の最後に、アトリビュートエリアがある
+		 */
 
 		char_start_addr = text_dma_addr.W;
 		attr_start_addr = text_dma_addr.W + crtc_sz_columns;
@@ -561,106 +558,81 @@ void crtc_make_text_attr(void)
 		for (i = 0; i < crtc_sz_lines; i++) {
 			/* 行単位で属性作成 */
 
+			char do_pickup[128] = { 0, };
+
 			c_addr    = char_start_addr;
 			a_addr    = attr_start_addr;
 
 			char_start_addr += crtc_byte_per_line;
 			attr_start_addr += crtc_byte_per_line;
 
-
-			/* 属性初期化 [0]..[80] */
-			attr_rest = 0;
-			for (j = 0; j <= CRTC_SZ_COLUMNS; j++) {
-				text_attr[j] = 0;
-			}
-
-
-			for (j = 0; j < crtc_sz_attrs; j++) {
-				/* 属性を指定番目の配列に格納 */
-				column = main_ram[ a_addr++ ];
-				attr   = main_ram[ a_addr++ ];
-
-				if (j != 0 && column == 0) {
-					/* 特殊処理? */
-					column = 0x80;
-				}
-				if (j == 0 && column == 0x80) {
-					column = 0;
-					/*global_attr = (ATTR_G|ATTR_R|ATTR_B);
-					  global_blink= FALSE;*/
-				}
-
-				/* 8bit目は使用済のフラグ */
-				if (column == 0x80  &&  !attr_rest) {
-					attr_rest = attr | 0x100;
-				} else if (column <= CRTC_SZ_COLUMNS  &&  !text_attr[ column ]) {
-					text_attr[ column ] = attr | 0x100;
-				}
-			}
-
-
-			/* 指定桁-1まで属性が有効、という場合の処理。
-			   (指定桁以降属性が有効、というふうに並べ替える) */
-			if (!text_attr[0] && attr_rest) {
-				for (j = CRTC_SZ_COLUMNS; j; j--) {
-					if (text_attr[j]) {
-						tmp          = text_attr[j];
-						text_attr[j] = attr_rest;
-						attr_rest    = tmp;
-					}
-				}
-				text_attr[0] = attr_rest;
-			}
-
-
-			/* 属性を内部コードに変換し、属性ワークを全て埋める。 */
+			/* テキストエリアの文字コードを抽出 */
 			for (j = 0; j < CRTC_SZ_COLUMNS; j++) {
-				if ((attr = *text_attr)) {
+				text_attr[j] = (Ushort)main_ram[ c_addr ++ ] << 8;
+			}
+
+			/* アトリビュートエリアの桁数情報を抽出 */
+			for (j = 0; j < crtc_sz_attrs; j++) {
+				/* この桁位置から属性を適用する、というフラグを立てる */
+				do_pickup[ (main_ram[ a_addr + (j * 2) ] & 0x7f) ] = TRUE;
+			}
+
+			/* アトリビュートエリアの属性情報を抽出しながら適用していく */
+			a_addr += 1;
+			for (j = 0; j < CRTC_SZ_COLUMNS; j++) {
+
+				if (do_pickup[j]) {
+					/* 「この桁位置から属性を適用するフラグ」が立っていれば、
+					 * 属性を拾って内部コードに変換する (この桁以降にて適用) */
+
+					attr = main_ram[ a_addr ];
+					a_addr += 2;
+
 					if (crtc_attr_color) {
 						if (attr & COLOR_SWITCH) {
-							global_attr =
-								(global_attr & MONO_MASK) |
+							global_attr &= (ATTR_DECO_MASK);
+							global_attr |=
 								(attr & (COLOR_G | COLOR_R | COLOR_B | COLOR_GRAPH));
 						} else {
-							global_attr =
-								(global_attr & (COLOR_MASK | ATTR_GRAPH)) |
+							global_attr &= (ATTR_COLOR_MASK | ATTR_GRAPH);
+							global_attr |=
 								((attr & (MONO_UNDER | MONO_UPPER | MONO_REVERSE)) >> 2) |
 								((attr &  MONO_SECRET) << 1);
 							global_blink = (attr & MONO_BLINK);
 						}
 					} else {
-						global_attr =
-							(global_attr & COLOR_MASK) |
+						global_attr &= (ATTR_COLOR_MASK);
+						global_attr |=
 							((attr &  MONO_GRAPH) >> 3) |
 							((attr & (MONO_UNDER | MONO_UPPER | MONO_REVERSE)) >> 2) |
 							((attr &  MONO_SECRET) << 1);
 						global_blink = (attr & MONO_BLINK);
 					}
+
 					/* BLINKのOFF時はSECRET扱い */
 					if (global_blink && ((blink_counter & 0x03) == 0)) {
-						global_attr =  global_attr | ATTR_SECRET;
+						global_attr |= ATTR_SECRET;
 					}
 				}
 
-				*text_attr ++ = ((Ushort)main_ram[ c_addr ++ ] << 8) | global_attr;
-
+				*text_attr++ |= global_attr;
 			}
-
-			/* 1行飛ばし指定時は次の行をSECRETで埋める。 */
+				
+			/* 1行飛ばし指定時は次の行をシークレット(他の属性は継続)で埋める */
 			if (crtc_skip_line) {
 				if (++i < crtc_sz_lines) {
 					for (j = 0; j < CRTC_SZ_COLUMNS; j++) {
-						*text_attr ++ =  global_attr | ATTR_SECRET;
+						*text_attr ++ = (global_attr | ATTR_SECRET);
 					}
 				}
 			}
 
 		}
 
-		/* 残りの行は、SECRET (24行設定対策) */
+		/* 残りの行は、シークレット(他の属性は継続)で埋める (24行設定対策) */
 		for (; i < CRTC_SZ_LINES; i++) {
 			for (j = 0; j < CRTC_SZ_COLUMNS; j++) {
-				*text_attr ++ =  global_attr | ATTR_SECRET;
+				*text_attr ++ = (global_attr | ATTR_SECRET);
 			}
 		}
 
@@ -668,8 +640,8 @@ void crtc_make_text_attr(void)
 
 
 
-	/* CRTC や DMAC は動いているけど、 テキストが非表示
-	   でVRAM白黒の場合 (アトリビュートの色だけが有効) */
+	/* CRTC や DMAC は動いているけど、テキストが非表示でVRAM白黒の場合
+	 * (アトリビュートの色だけが有効なので、その情報だけにする) */
 
 	if (text_display == TEXT_ATTR_ONLY) {
 
@@ -707,21 +679,6 @@ void crtc_make_text_attr(void)
 				^= crtc_cursor_style;
 		}
 	}
-
-
-	/* シークレット属性処理 (文字コード 0x00 に置換) */
-
-	text_attr = &text_attr_buf[ text_attr_flipflop ][0];
-	for (i = 0; i < CRTC_SZ_LINES; i++) {
-		for (j = 0; j < CRTC_SZ_COLUMNS; j++) {
-			if (*text_attr & ATTR_SECRET) {
-				/* SECRET 属性は、コード00に */
-				*text_attr &= (COLOR_MASK | ATTR_UPPER | ATTR_LOWER | ATTR_REVERSE);
-			}
-			text_attr ++;
-		}
-	}
-
 }
 
 
@@ -751,25 +708,24 @@ void get_font_gryph(int attr, T_GRYPH *gryph, int *color)
 	bit32 *src;
 	bit32 *dst = (bit32 *)gryph;
 
-	*color = ((attr & COLOR_MASK) >> 5) | 8;
+	/* 色をセット */
+	*color = ((attr & ATTR_COLOR_MASK) >> 5) | 8;
+
+	/* テキスト画面非表示指定時は、空白文字にして直ちに戻る */
+	if (hide_text_screen) {
+		*dst++ = 0;
+		*dst++ = 0;
+		*dst   = 0;
+		return;
+	}
 
 
-	if ((attr & ~(COLOR_MASK | ATTR_REVERSE)) == 0) {
+	if (attr & ATTR_SECRET) {
+		/* シークレットの場合、空白文字 (全ビット 0) として扱う */
 
-		if ((attr & ATTR_REVERSE) == 0) {
-			/* 空白フォント時 */
-
-			*dst++ = 0;
-			*dst++ = 0;
-			*dst   = 0;
-
-		} else {
-			/* ベタフォント時 */
-
-			*dst++ = 0xffffffff;
-			*dst++ = 0xffffffff;
-			*dst   = 0xffffffff;
-		}
+		*dst++ = 0;
+		*dst++ = 0;
+		*dst   = 0;
 
 	} else {
 		/* 通常フォント時 */
@@ -782,24 +738,23 @@ void get_font_gryph(int attr, T_GRYPH *gryph, int *color)
 			src = (bit32 *)&font_rom[(chara) * 8 ];
 		}
 
-		/* フォントをまず内部ワークにコピー */
 		*dst++ = *src++;
 		*dst++ = *src;
 		*dst   = 0;
+	}
 
-		/* 属性により内部ワークフォントを加工*/
-		if (attr & ATTR_UPPER) {
-			gryph->b[ 0 ] |= 0xff;
-		}
-		if (attr & ATTR_LOWER) {
-			gryph->b[ crtc_font_height - 1 ] |= 0xff;
-		}
-		if (attr & ATTR_REVERSE) {
-			dst -= 2;
-			*dst++ ^= 0xffffffff;
-			*dst++ ^= 0xffffffff;
-			*dst   ^= 0xffffffff;
-		}
+	/* アッパーライン、アンダーライン、リバースの場合、フォントを加工 */
+	if (attr & ATTR_UPPER) {
+		gryph->b[ 0 ] |= 0xff;
+	}
+	if (attr & ATTR_LOWER) {
+		gryph->b[ crtc_font_height - 1 ] |= 0xff;
+	}
+	if (attr & ATTR_REVERSE) {
+		dst -= 2;
+		*dst++ ^= 0xffffffff;
+		*dst++ ^= 0xffffffff;
+		*dst   ^= 0xffffffff;
 	}
 }
 

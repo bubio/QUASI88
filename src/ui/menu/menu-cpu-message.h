@@ -8,14 +8,12 @@ enum {
 	DATA_CPU_CPU,
 	DATA_CPU_CLOCK,
 	DATA_CPU_WAIT,
-	DATA_CPU_BOOST,
 	DATA_CPU_HELP
 };
 static const t_menulabel data_cpu[] = {
 	{ { " <<< SUB-CPU MODE >>> ",	" SUB-CPU駆動 <変更時はリセットを推奨> ",	}, },
 	{ { " << CLOCK >> ",			" CPU クロック (-clock) ",					}, },
 	{ { " << WAIT >> ",				" 速度 (-speed, -nowait) ",					}, },
-	{ { " << BOOST >> ",			" ブースト (-boost) ",						}, },
 	{ { " HELP ",					" 説明 ",									}, },
 };
 
@@ -69,25 +67,6 @@ static const t_menudata data_cpu_wait_combo[] = {
 	{ { " 400",	" 400",	},  400, },
 	{ { " 800",	" 800",	},  800, },
 	{ { "1600",	"1600",	}, 1600, },
-};
-
-
-enum {
-	DATA_CPU_BOOST_MAGNIFY,
-	DATA_CPU_BOOST_UNIT,
-	DATA_CPU_BOOST_INFO
-};
-static const t_menulabel data_cpu_boost[] = {
-	{ { " Power         ",		" 倍率       ",				}, },
-	{ { "      ",				"倍    ",					}, },
-	{ { "(Range =   1-100)   ",	"（範囲＝  1 - 100）  ",	}, },
-};
-static const t_menudata data_cpu_boost_combo[] = {
-	{ { "   1",		"   1",	},  1,	},
-	{ { "   2",		"   2",	},  2,	},
-	{ { "   4",		"   4",	},  4,	},
-	{ { "   8",		"   8",	},  8,	},
-	{ { "  16",		"  16",	}, 16,	},
 };
 
 

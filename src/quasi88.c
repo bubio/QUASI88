@@ -94,7 +94,7 @@ void quasi88_start(void)
 
 		alarm_init();
 		q8tk_init();
-		submenu_init();
+		toolbar_init();
 		statusbar_init();
 
 		/* エミュ用メモリ初期化 */
@@ -124,7 +124,9 @@ void quasi88_start(void)
 						imagefile_all_open(resume_flag);	/* イメージファイルを全て開く */
 
 						/* エミュ用ワークを順次初期化   */
+						pc88main_cpu_init();
 						pc88main_init((resume_flag) ? INIT_STATELOAD : INIT_POWERON);
+						pc88sub_cpu_init();
 						pc88sub_init((resume_flag) ? INIT_STATELOAD : INIT_POWERON);
 
 						key_record_playback_init();			/* キー入力記録/再生 初期化 */
@@ -305,7 +307,7 @@ int quasi88_loop(void)
 
 	/* イニシャル処理 ================================================= */
 	if (init_done == FALSE) {
-		profiler_lapse(PROF_LAPSE_RESET);
+		debuglog_sync();
 
 		/* モード変更時は、必ずイニシャルが必要。モード変更フラグをクリア */
 		quasi88_event_flags &= ~EVENT_MODE_CHANGED;
@@ -339,31 +341,37 @@ int quasi88_loop(void)
 
 		switch (major_mode) {
 		case EXEC:
+			/* 現在の、リセット情報を取得 */
+			quasi88_get_reset_cfg(&reset_req);
 			emu_init();
-			submenu_controll(CTRL_MODE_EXEC);
+			toolbar_controll(CTRL_MODE_EXEC);
 			break;
 
 		case MENU:
 			menu_init();
 			if (quasi88_is_pause()) {
-				submenu_controll(CTRL_MODE_MENU_PAUSE);
+				toolbar_controll(CTRL_MODE_MENU_PAUSE);
 			} else if (quasi88_is_askreset()) {
-				submenu_controll(CTRL_MODE_MENU_ASKRESET);
+				toolbar_controll(CTRL_MODE_MENU_ASKRESET);
 			} else if (quasi88_is_askspeedup()) {
-				submenu_controll(CTRL_MODE_MENU_ASKSPEEDUP);
-			} else if (quasi88_is_askdiskchange()) {
-				submenu_controll(CTRL_MODE_MENU_ASKDISKCHANGE);
+				toolbar_controll(CTRL_MODE_MENU_ASKSPEEDUP);
+			} else if (quasi88_is_askopenfile()) {
+				toolbar_controll(CTRL_MODE_MENU_ASKOPENFILE);
+			} else if (quasi88_is_askselectdisk()) {
+				toolbar_controll(CTRL_MODE_MENU_ASKSELECTDISK);
+			} else if (quasi88_is_askstatefile()) {
+				toolbar_controll(CTRL_MODE_MENU_ASKSTATEFILE);
 			} else if (quasi88_is_askquit()) {
-				submenu_controll(CTRL_MODE_MENU_ASKQUIT);
+				toolbar_controll(CTRL_MODE_MENU_ASKQUIT);
 			} else {
-				submenu_controll(CTRL_MODE_MENU_FULLMENU);
+				toolbar_controll(CTRL_MODE_MENU_FULLMENU);
 			}
 			break;
 
 #ifdef USE_MONITOR
 		case MONITOR:
 			monitor_init();
-			submenu_controll(CTRL_MODE_MONITOR);
+			toolbar_controll(CTRL_MODE_MONITOR);
 			break;
 #endif
 		}
@@ -377,8 +385,14 @@ int quasi88_loop(void)
 
 	/* メイン処理 ================================================= */
 
+	profiler_lapse(PROF_LAPSE_START);
+
 	/* イベント処理 */
+	profiler_lapse(PROF_LAPSE_EVENT);
 	event_update();
+
+	/* UI処理 */
+	profiler_lapse(PROF_LAPSE_UI);
 
 	/* アラーム処理 */
 	alarm_update();
@@ -389,28 +403,29 @@ int quasi88_loop(void)
 
 	switch (major_mode) {
 	case EXEC:
-		profiler_lapse(PROF_LAPSE_RESET);
 		emu_main();
 		break;
 #ifdef  USE_MONITOR
 	case MONITOR:
+		profiler_lapse(PROF_LAPSE_SKIP);
+		profiler_lapse(PROF_LAPSE_SKIP);
 		monitor_main();
 		break;
 #endif
 	case MENU:
+		profiler_lapse(PROF_LAPSE_SKIP);
+		profiler_lapse(PROF_LAPSE_SKIP);
 		menu_main();
 		break;
 	}
 
 	{
-		profiler_lapse(PROF_LAPSE_SND);
-
 		/* サウンド出力 */
+		profiler_lapse(PROF_LAPSE_PCM);
 		xmame_sound_update();
 
-		profiler_lapse(PROF_LAPSE_AUDIO);
-
 		/* サウンド出力 その2 */
+		profiler_lapse(PROF_LAPSE_AUDIO);
 		xmame_update_video_and_audio();
 	}
 
@@ -426,6 +441,8 @@ int quasi88_loop(void)
 		screen_update();
 		do_wait = TRUE;
 	} else {
+		profiler_lapse(PROF_LAPSE_SKIP);
+		profiler_lapse(PROF_LAPSE_SKIP);
 		do_wait = FALSE;
 	}
 
@@ -459,6 +476,9 @@ int quasi88_loop(void)
 		if (major_mode == EXEC) {
 			frameskip_check((stat == WAIT_JUST) ? TRUE : FALSE);
 		}
+
+	} else {
+		profiler_lapse(PROF_LAPSE_SKIP);
 	}
 
 
@@ -531,9 +551,19 @@ void quasi88_askspeedup(void)
 	set_mode(MENU | MENU_MODE_ASKSPEEDUP);
 }
 
-void quasi88_askdiskchange(void)
+void quasi88_askopenfile(void)
 {
-	set_mode(MENU | MENU_MODE_ASKDISKCHANGE);
+	set_mode(MENU | MENU_MODE_ASKOPENFILE);
+}
+
+void quasi88_askselectdisk(void)
+{
+	set_mode(MENU | MENU_MODE_ASKSELECTDISK);
+}
+
+void quasi88_askstatefile(void)
+{
+	set_mode(MENU | MENU_MODE_ASKSTATEFILE);
 }
 
 void quasi88_askquit(void)
@@ -564,6 +594,8 @@ void quasi88_quit(void)
 {
 	set_mode(QUIT);
 	quasi88_event_flags |= EVENT_QUIT;
+
+	profiler_stop();
 }
 
 /* QUASI88のモードを取得する */
@@ -595,9 +627,17 @@ int quasi88_is_askspeedup(void)
 {
 	return (mode == (MENU | MENU_MODE_ASKSPEEDUP)) ? TRUE : FALSE;
 }
-int quasi88_is_askdiskchange(void)
+int quasi88_is_askopenfile(void)
 {
-	return (mode == (MENU | MENU_MODE_ASKDISKCHANGE)) ? TRUE : FALSE;
+	return (mode == (MENU | MENU_MODE_ASKOPENFILE)) ? TRUE : FALSE;
+}
+int quasi88_is_askselectdisk(void)
+{
+	return (mode == (MENU | MENU_MODE_ASKSELECTDISK)) ? TRUE : FALSE;
+}
+int quasi88_is_askstatefile(void)
+{
+	return (mode == (MENU | MENU_MODE_ASKSTATEFILE)) ? TRUE : FALSE;
 }
 int quasi88_is_askquit(void)
 {

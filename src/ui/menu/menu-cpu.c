@@ -364,94 +364,6 @@ static Q8tkWidget *menu_cpu_wait(void)
 }
 
 /*----------------------------------------------------------------------*/
-/* ブースト */
-static int get_cpu_boost(void)
-{
-	return boost;
-}
-static void cb_cpu_boost(Q8tkWidget *widget, void *mode)
-{
-	int i;
-	const t_menudata *p = data_cpu_boost_combo;
-	const char *combo_str = q8tk_combo_get_text(widget);
-	char buf[16], *conv_end;
-	int val = 0;
-	int fit = FALSE;
-
-	/* COMBO BOX から ENTRY に一致するものを探す */
-	for (i = 0; i < COUNTOF(data_cpu_boost_combo); i++, p++) {
-		if (strcmp(p->str[menu_lang], combo_str) == 0) {
-			val = p->val;
-			fit = TRUE; /* 一致した値を適用 */
-			break;
-		}
-	}
-
-	/* COMBO BOX に該当がない場合 */
-	if (fit == FALSE) {
-		strncpy(buf, combo_str, 15);
-		buf[15] = '\0';
-
-		val = strtoul(buf, &conv_end, 10);
-
-		if ((P2INT(mode) == 0) &&
-			(strlen(buf) == 0 || val == 0)) {
-			/* 空白 + ENTER や 0 + ENTER 時は デフォルト値を適用*/
-			val = 1;
-			fit = TRUE;
-
-		} else if (*conv_end != '\0') {
-			/* 数字変換失敗なら その値は使えない */
-			fit = FALSE;
-
-		} else {
-			/* 数字変換成功なら その値を適用する */
-			fit = TRUE;
-		}
-	}
-
-	/* 適用した値が有効範囲なら、セット */
-	if (fit) {
-		if (1 <= val && val <= 100) {
-			if (boost != val) {
-				boost_change(val);
-			}
-		}
-	}
-
-	/* COMBO ないし ENTER時は、値を再表示*/
-	if (P2INT(mode) == 0) {
-		sprintf(buf, "%4d", get_cpu_boost());
-		q8tk_combo_set_text(widget, buf);
-	}
-}
-
-static Q8tkWidget *menu_cpu_boost(void)
-{
-	Q8tkWidget *hbox;
-	char buf[8];
-	const t_menulabel *p = data_cpu_boost;
-
-	hbox = PACK_HBOX(NULL);
-	{
-		PACK_LABEL(hbox, GET_LABEL(p, DATA_CPU_BOOST_MAGNIFY));
-
-		sprintf(buf, "%4d", get_cpu_boost());
-		PACK_COMBO(hbox,
-				   data_cpu_boost_combo, COUNTOF(data_cpu_boost_combo),
-				   get_cpu_boost(), buf, 5,
-				   cb_cpu_boost, (void *)0,
-				   cb_cpu_boost, (void *)1);
-
-		PACK_LABEL(hbox, GET_LABEL(p, DATA_CPU_BOOST_UNIT));
-
-		PACK_LABEL(hbox, GET_LABEL(p, DATA_CPU_BOOST_INFO));
-	}
-
-	return hbox;
-}
-
-/*----------------------------------------------------------------------*/
 /* (各種設定の変更) */
 static int get_cpu_misc(int type)
 {
@@ -548,9 +460,6 @@ Q8tkWidget *menu_cpu(void)
 
 				PACK_FRAME(vbox2,
 						   GET_LABEL(l, DATA_CPU_WAIT), menu_cpu_wait());
-
-				PACK_FRAME(vbox2,
-						   GET_LABEL(l, DATA_CPU_BOOST), menu_cpu_boost());
 			}
 
 			f = PACK_FRAME(hbox, "", menu_cpu_misc());

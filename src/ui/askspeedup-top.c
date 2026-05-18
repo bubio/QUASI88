@@ -24,7 +24,7 @@ static void cb_speedup(UNUSED_WIDGET, void *parm)
 	quasi88_exec();
 }
 
-void speedup_top(void)
+void askspeedup_top(void)
 {
 	Q8tkWidget *d, *a, *l;
 

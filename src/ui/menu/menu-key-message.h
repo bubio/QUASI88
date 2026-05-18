@@ -61,9 +61,9 @@ static const t_menudata data_key_fkey_fn[] = {
 	{ { "KANA        : KANA key",					"KANA        : カナ キー",						},  FN_KANA,		},
 	{ { "ROMAJI      : KANA(ROMAJI) Key",			"ROMAJI      : カナ(ローマ字入力) キー",		},  FN_ROMAJI,		},
 	{ { "CAPS        : CAPS Key",					"CAPS        : CAPS キー",						},  FN_CAPS,		},
-	{ { "MAX-SPEED   : Max Speed",					"MAX-SPEED   : 速度最大設定値",					},  FN_MAX_SPEED,	},
-	{ { "MAX-CLOCK   : Max CPU-Clock",				"MAX-CLOCK   : CPUクロック最大設定値",			},  FN_MAX_CLOCK,	},
-	{ { "MAX-BOOST   : Max Boost",					"MAX-BOOST   : ブースト最大設定値",				},  FN_MAX_BOOST,	},
+	{ { "MAX-SPEED   : Invalid",					"MAX-SPEED   : 無効",							},  FN_MAX_SPEED,	},
+	{ { "MAX-CLOCK   : Invalid",					"MAX-CLOCK   : 無効",							},  FN_MAX_CLOCK,	},
+	{ { "MAX-BOOST   : Invalid",					"MAX-BOOST   : 無効",							},  FN_MAX_BOOST,	},
 	{ { "STATUS      : Display status",				"STATUS      : ステータス表示のオン／オフ",		},  FN_STATUS,		},
 	{ { "MENU        : Go Menu-Mode",				"MENU        : メニュー",						},  FN_MENU,		},
 };

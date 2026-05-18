@@ -21,7 +21,7 @@
  * ・ファイル名の一覧は、システム依存関数にて処理する。
  * --------------------------------------------------------------------------
  * Q8tkWidget *q8tk_file_selection_new(const char *title, int select_ro)
- *    ファイルセレクションの生成。
+ *    ファイルセレクションのウインドウを生成。
  *    見出し表示用の文字列 title を指定する。
  *    select_ro が 1 なら、「Read Only」チェックボタンが表示され、チェック
  *    される。0 なら、「Read Only」チェックボタンが表示されるが、チェックは
@@ -30,15 +30,16 @@
  *      取得できるので、呼び出し元でリードオンリーで開くかどうかを決定する)
  *
  * Q8tkWidget *q8tk_file_selection_simple_new(void)
- *    簡易版ファイルセレクションの生成。
+ *    簡易版ファイルセレクションのウインドウを生成。
  *    通常のファイルセレクションと外観以外に、以下が異なる
- *      o ディレクトリ名やファイル数は表示されない
- *      o エントリは表示されない (ファイル名を入力しての選択は不可)
+ *      o 見出しやディレクトリ名やファイル数は表示されない
+ *      o エントリウィジットは表示されない (ファイル名を入力しての選択は不可)
  *      o VIEW ボタンは表示されない
  *      o Read Only チェックボックスは表示されない (Read Only の選択は不可)
  *      o OK ボタンは表示されない。ファイルの選択はリストアイテムで行う
- *      o EJECT ボタンが追加で表示される
- *      o 対象ドライブを指定する Drive N: チェックボックスが追加で表示される
+ *      o CANCEL ボタンは表示されない
+ *      o ファイルセレクションがパックされた水平ボックス simple_hbox が
+ *        公開されるので、ここに任意のウィジットをパックすることができる
  *
  * const char *q8tk_file_selection_get_filename(Q8tkWidget *fselect)
  *    選択(入力)されているファイル名を取得する。
@@ -109,9 +110,8 @@
  *                            "clicked", ユーザ関数、ユーザ引数);
  *
  * 簡易版ファイルセレクションの場合、上記の一部のウィジットが非表示に
- * なり、さらに構成も異なる。 eject_button が新たに追加されており、
- * cancel_button、ok_button、eject_button はユーザが任意にシグナルを
- * 設定できる。(なお、 ok_button は表示されない)
+ * なり、さらに構成も異なる。
+ * cancel_button、ok_button は非表示だが、ユーザが任意にシグナルを設定できる。
  *
  * ---------------------------------------------------------------------
  * (A)  ←→【LIST ITEM】←→【LABEL】
@@ -654,17 +654,17 @@ Q8tkWidget *q8tk_file_selection_new(const char *title, int select_ro)
 	/*  q8tk_file_selection_set_filename(window, Q8TK_FILE_SELECTION(fselect)->pathname);*/
 
 
-	/* 通常版は eject_button が NULL。簡易版は 非NULL */
+	/* 通常版は simple_hbox が NULL。簡易版は 非NULL */
 	/* これで通常版か簡易版かを判定している。専用の変数を用意すべきだが… */
-	fselect->stat.fselect.eject_button = NULL;
+	fselect->stat.fselect.simple_hbox = NULL;
 
 	return window;
 }
 
 Q8tkWidget *q8tk_file_selection_simple_new(void)
 {
-	Q8tkWidget *fselect, *window, *vbox, *hbox, *wk;
-	int i, save_code;
+	Q8tkWidget *fselect, *window, *hbox;
+	int save_code;
 
 	fselect = malloc_widget();
 	fselect->type = Q8TK_TYPE_FILE_SELECTION;
@@ -682,66 +682,7 @@ Q8tkWidget *q8tk_file_selection_simple_new(void)
 	q8tk_container_add(window, hbox);
 	q8tk_widget_show(hbox);
 
-	vbox = q8tk_vbox_new();
-	q8tk_box_pack_start(hbox, vbox);
-	q8tk_widget_show(vbox);
-	{
-		Q8tkWidget *f, *vv;
-		f = q8tk_frame_new("Target");
-		q8tk_box_pack_start(vbox, f);
-		q8tk_widget_show(f);
-
-		vv = q8tk_vbox_new();
-		q8tk_container_add(f, vv);
-		q8tk_widget_show(vv);
-
-		for (i = 0; i < 2; i++) {
-			wk = q8tk_label_new("");
-			q8tk_box_pack_start(vv, wk);
-			q8tk_widget_show(wk);
-
-			fselect->stat.fselect.drv_button[i] =
-				q8tk_check_button_new_with_label((i == 0) ?
-												 "Drive 1:" : "Drive 2:");
-			q8tk_box_pack_start(vv, fselect->stat.fselect.drv_button[i]);
-			q8tk_toggle_button_set_state(
-				fselect->stat.fselect.drv_button[i], TRUE);
-			q8tk_widget_show(fselect->stat.fselect.drv_button[i]);
-		}
-
-		wk = q8tk_label_new("");
-		q8tk_box_pack_start(vv, wk);
-		q8tk_widget_show(wk);
-
-		for (i = 0; i < 10; i++) {
-			wk = q8tk_label_new("");
-			q8tk_box_pack_start(vbox, wk);
-			q8tk_widget_show(wk);
-		}
-
-		/* [EJECT] */
-		fselect->stat.fselect.eject_button =
-			q8tk_button_new_with_label("EJECT ");
-		q8tk_box_pack_start(vbox, fselect->stat.fselect.eject_button);
-		q8tk_widget_show(fselect->stat.fselect.eject_button);
-		q8tk_misc_set_placement(fselect->stat.fselect.eject_button,
-								Q8TK_PLACEMENT_X_CENTER,
-								Q8TK_PLACEMENT_Y_CENTER);
-
-		/* [CANCEL] */
-		fselect->stat.fselect.cancel_button =
-			q8tk_button_new_with_label("CANCEL");
-		q8tk_box_pack_start(vbox, fselect->stat.fselect.cancel_button);
-		q8tk_widget_show(fselect->stat.fselect.cancel_button);
-		q8tk_misc_set_placement(fselect->stat.fselect.cancel_button,
-								Q8TK_PLACEMENT_X_CENTER,
-								Q8TK_PLACEMENT_Y_CENTER);
-	}
-
-	/* すきま */
-	wk = q8tk_label_new(" ");
-	q8tk_box_pack_start(hbox, wk);
-	q8tk_widget_show(wk);
+	fselect->stat.fselect.simple_hbox = hbox;
 
 	/* [リスト] */
 	fselect->stat.fselect.scrolled_window
@@ -780,6 +721,10 @@ Q8tkWidget *q8tk_file_selection_simple_new(void)
 	fselect->stat.fselect.ok_button = q8tk_button_new();
 	q8tk_box_pack_start(hbox, fselect->stat.fselect.ok_button);
 
+	/* [CANCEL] */
+	fselect->stat.fselect.cancel_button = q8tk_button_new();
+	q8tk_box_pack_start(hbox, fselect->stat.fselect.cancel_button);
+
 	/* [エントリ部] */
 	save_code = q8tk_set_kanjicode(osd_kanji_code());
 	fselect->stat.fselect.selection_entry = q8tk_entry_new();
@@ -817,23 +762,4 @@ int q8tk_file_selection_get_readonly(Q8tkWidget *fselect)
 	} else {
 		return FALSE;
 	}
-}
-
-int q8tk_file_selection_simple_get_drive(Q8tkWidget *fselect)
-{
-	int i;
-	int drv = 0;
-
-	if (Q8TK_IS_NORMAL_FILE_SELECTION(fselect)) {
-		return 0;
-	}
-
-	for (i = 0; i < 2; i++) {
-		if (Q8TK_TOGGLE_BUTTON(Q8TK_FILE_SELECTION(fselect)->
-							   drv_button[i])->active) {
-			drv |= (1 << i);
-		}
-	}
-
-	return drv;
 }

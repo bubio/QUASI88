@@ -210,4 +210,7 @@ int  quasi88_printer_connect(const char *filename);
 void quasi88_printer_remove(void);
 
 
+/* リセット時に要求すべき設定 */
+extern T_RESET_CFG reset_req;
+
 #endif /* EVENT_H_INCLUDED */

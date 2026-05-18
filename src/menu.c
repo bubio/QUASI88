@@ -39,6 +39,7 @@ int menu_thema		= MENU_THEMA_LIGHT;			/* メニューのテーマ */
 #include "menu-top.h"
 #include "toolbar.h"
 
+#include "menu-graph.h"
 #include "menu-volume.h"
 
 
@@ -107,12 +108,14 @@ void ui_fullmenu_main(void)
 				emu_reset();
 			}
 
-			pc88main_bus_setup();
-			pc88sub_bus_setup();
+			pc88main_cpu_update();
+			pc88sub_cpu_update();
 		}
 
 		/* Q8TK メインモード終了 */
 		q8tk_main_stop();
+
+		menu_fullscreen_widget = NULL;
 
 	} else {
 
@@ -253,8 +256,14 @@ void menu_init(void)
 	case MENU_MODE_ASKSPEEDUP:
 		ui_askspeedup_init();
 		break;
-	case MENU_MODE_ASKDISKCHANGE:
-		ui_askdiskchange_init();
+	case MENU_MODE_ASKOPENFILE:
+		ui_askopenfile_init();
+		break;
+	case MENU_MODE_ASKSELECTDISK:
+		ui_askselectdisk_init();
+		break;
+	case MENU_MODE_ASKSTATEFILE:
+		ui_askstatefile_init();
 		break;
 	case MENU_MODE_ASKQUIT:
 		ui_askquit_init();
@@ -277,8 +286,14 @@ void menu_main(void)
 	case MENU_MODE_ASKSPEEDUP:
 		ui_askspeedup_main();
 		break;
-	case MENU_MODE_ASKDISKCHANGE:
-		ui_askdiskchange_main();
+	case MENU_MODE_ASKOPENFILE:
+		ui_askopenfile_main();
+		break;
+	case MENU_MODE_ASKSELECTDISK:
+		ui_askselectdisk_main();
+		break;
+	case MENU_MODE_ASKSTATEFILE:
+		ui_askstatefile_main();
 		break;
 	case MENU_MODE_ASKQUIT:
 		ui_askquit_main();
@@ -309,5 +324,17 @@ void menu_set_thema(int thema)
 		q8tk_set_solid(TRUE);
 	} else {
 		q8tk_set_solid(FALSE);
+	}
+}
+
+
+
+/***********************************************************************
+ *
+ ************************************************************************/
+void menu_set_fullscreen(void)
+{
+	if (menu_fullscreen_widget) {
+		q8tk_toggle_button_set_state(menu_fullscreen_widget, TRUE);
 	}
 }

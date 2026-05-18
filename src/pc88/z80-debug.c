@@ -5,12 +5,17 @@
  ************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 
 #include "quasi88.h"
 #include "debug.h"
 #include "z80.h"
 
 
+#ifdef  USE_MONITOR
+/*************************************************************************
+ * 逆アセンブル
+ *************************************************************************/
 /*
   オペランドの型
      NOTHING      なし     XX            そのまま表示
@@ -1331,63 +1336,79 @@ static Mnemonics Instruction_FD_CB[256] = {
 #define M_RDMEM(addr)			(z80->mem_read)(addr)
 
 
-static void printf_head(z80arch *z80, word pc, int num)
+static const char *get_machine_code(z80arch *z80, word pc, int num)
 {
-	/* アドレス／インストラクションコードの表示 */
-
-	printf("%04X ", pc);
+	static char buf[10];		/* 注! 戻り値にこの変数のポインタを返す */
+	memset(buf, 0, sizeof(buf));
 
 	switch (num) {
 	case 1:
-		printf("%02X       ",      M_RDMEM(pc));
+		sprintf(buf, "%02X      ",
+				M_RDMEM(pc));
 		break;
 	case 2:
-		printf("%02X%02X     ",    M_RDMEM(pc),  M_RDMEM(pc + 1));
+		sprintf(buf, "%02X%02X    ",
+				M_RDMEM(pc),  M_RDMEM(pc + 1));
 		break;
 	case 3:
-		printf("%02X%02X%02X   ",  M_RDMEM(pc),  M_RDMEM(pc + 1),
-			   M_RDMEM(pc + 2));
+		sprintf(buf, "%02X%02X%02X  ",
+				M_RDMEM(pc), M_RDMEM(pc + 1), M_RDMEM(pc + 2));
 		break;
 	case 4:
-		printf("%02X%02X%02X%02X ", M_RDMEM(pc),  M_RDMEM(pc + 1),
-			   M_RDMEM(pc + 2), M_RDMEM(pc + 3));
+		sprintf(buf, "%02X%02X%02X%02X",
+				M_RDMEM(pc), M_RDMEM(pc + 1), M_RDMEM(pc + 2), M_RDMEM(pc + 3));
 		break;
 	default:
-		printf("Internal Error -");
+		sprintf(buf, "Error   ");
 		break;
 	}
+
+	return buf;
 }
 
-
-int z80_line_disasm(z80arch *z80, word pc)
+int z80_line_disasm(z80arch *z80, word pc, char output[36])
 {
-	int       num;
+	/* output[36] にセットされる文字列
+	 *  番地 命令     ニモニック
+	 *  0869 C3B303    JP    03B3H         \0
+	 * "AAAA CCCCCCCC NNNNNNNNNNNNNNNNNNNNN "  36byte */
+
+	int success = TRUE;
+	int op_len = 1;
+	const char *mac_code;
+	char asm_code[24];
+	int num;
 	Mnemonics *Inst;
 
 	Inst = &Instruction[ M_RDMEM(pc) ];
+
 	switch (Inst->type) {
 	case OP_NOTHING:
-		printf_head(z80, pc, 1);
-		printf(Inst->str);
-		return 1;
+		op_len = 1;
+		mac_code = get_machine_code(z80, pc, op_len);
+		sprintf(asm_code, Inst->str);
+		break;
 
 	case OP_NUM_8:
+		op_len = 2;
 		num = M_RDMEM(pc + 1);
-		printf_head(z80, pc, 2);
-		printf(Inst->str, num);
-		return 2;
+		mac_code = get_machine_code(z80, pc, op_len);
+		sprintf(asm_code, Inst->str, num);
+		break;
 
 	case OP_NUM_16:
+		op_len = 3;
 		num = M_RDMEM(pc + 1) + M_RDMEM(pc + 2) * 256;
-		printf_head(z80, pc, 3);
-		printf(Inst->str, num);
-		return 3;
+		mac_code = get_machine_code(z80, pc, op_len);
+		sprintf(asm_code, Inst->str, num);
+		break;
 
 	case OP_ADR_REL:
+		op_len = 2;
 		num = pc + 2 + (offset)M_RDMEM(pc + 1);
-		printf_head(z80, pc, 2);
-		printf(Inst->str, num);
-		return 2;
+		mac_code = get_machine_code(z80, pc, op_len);
+		sprintf(asm_code, Inst->str, num);
+		break;
 
 
 	case OP_PREFIX:
@@ -1405,47 +1426,59 @@ int z80_line_disasm(z80arch *z80, word pc)
 			Inst = &Instruction_FD[ M_RDMEM(pc + 1) ];
 			break;
 		default:
-			printf(" - Internal Error ! - ");
-			return 2;
+			Inst = NULL;
+			op_len = 1;
+			success = FALSE;
+			break;
+		}
+		if (Inst == NULL) {
+			break;
 		}
 		switch (Inst->type) {
 		case OP_NOTHING:
-			printf_head(z80, pc, 2);
-			printf(Inst->str);
-			return 2;
+			op_len = 2;
+			mac_code = get_machine_code(z80, pc, op_len);
+			sprintf(asm_code, Inst->str);
+			break;
 
 		case OP_UNEXIST:
-			printf_head(z80, pc, 2);
-			printf(Inst->str, M_RDMEM(pc), M_RDMEM(pc + 1));
-			return 2;
+			op_len = 2;
+			mac_code = get_machine_code(z80, pc, op_len);
+			sprintf(asm_code, Inst->str, M_RDMEM(pc), M_RDMEM(pc + 1));
+			break;
 
 		case OP_SKIP:
-			printf_head(z80, pc, 1);
-			printf(Inst->str, M_RDMEM(pc));
-			return 1;
+			op_len = 1;
+			mac_code = get_machine_code(z80, pc, op_len);
+			sprintf(asm_code, Inst->str, M_RDMEM(pc));
+			break;
 
 		case OP_NUM_8:
+			op_len = 3;
 			num = M_RDMEM(pc + 2);
-			printf_head(z80, pc, 3);
-			printf(Inst->str, num);
-			return 3;
+			mac_code = get_machine_code(z80, pc, op_len);
+			sprintf(asm_code, Inst->str, num);
+			break;
 
 		case OP_NUM_16:
+			op_len = 4;
 			num = M_RDMEM(pc + 2) + M_RDMEM(pc + 3) * 256;
-			printf_head(z80, pc, 4);
-			printf(Inst->str, num);
-			return 4;
+			mac_code = get_machine_code(z80, pc, op_len);
+			sprintf(asm_code, Inst->str, num);
+			break;
 
 		case OP_INDEX:
-			printf_head(z80, pc, 3);
-			printf(Inst->str, (offset)M_RDMEM(pc + 2));
-			return 3;
+			op_len = 3;
+			mac_code = get_machine_code(z80, pc, op_len);
+			sprintf(asm_code, Inst->str, (offset)M_RDMEM(pc + 2));
+			break;
 
 		case OP_IDX_NUM:
+			op_len = 4;
 			num = (int)M_RDMEM(pc + 3);
-			printf_head(z80, pc, 4);
-			printf(Inst->str, (int)M_RDMEM(pc + 2), num);
-			return 4;
+			mac_code = get_machine_code(z80, pc, op_len);
+			sprintf(asm_code, Inst->str, (int)M_RDMEM(pc + 2), num);
+			break;
 
 
 		case OP_PREFIX:
@@ -1457,67 +1490,52 @@ int z80_line_disasm(z80arch *z80, word pc)
 				Inst = &Instruction_FD_CB[ M_RDMEM(pc + 3) ];
 				break;
 			default:
-				printf(" - Internal Error - ");
-				return 4;
+				Inst = NULL;
+				op_len = 2;
+				success = FALSE;
+				break;
+			}
+			if (Inst == NULL) {
+				break;
 			}
 			switch (Inst->type) {
 			case OP_INDEX:
-				printf_head(z80, pc, 4);
-				printf(Inst->str, (offset)M_RDMEM(pc + 2));
-				return 4;
+				op_len = 4;
+				mac_code = get_machine_code(z80, pc, op_len);
+				sprintf(asm_code, Inst->str, (offset)M_RDMEM(pc + 2));
+				break;
 
 			case OP_UNEXIST:
-				printf_head(z80, pc, 4);
-				printf(Inst->str, M_RDMEM(pc),  M_RDMEM(pc + 1),
-					   M_RDMEM(pc + 2), M_RDMEM(pc + 3));
-				return 4;
+				op_len = 4;
+				mac_code = get_machine_code(z80, pc, op_len);
+				sprintf(asm_code, Inst->str,
+						M_RDMEM(pc),  M_RDMEM(pc + 1),
+						M_RDMEM(pc + 2), M_RDMEM(pc + 3));
+				break;
+			default:
+				op_len = 3;
+				success = FALSE;
+				break;
 			}
 			break;
 		}
 		break;
 	}
 
-	printf(" - Internal Error - ");
-	return 1;
+	if (success) {
+		sprintf(output, "%04X %.8s %.20s", pc, mac_code, asm_code);
+	} else {
+		sprintf(output, "%04X %.8s", pc, "Error");
+	}
+
+	return op_len;
 }
 
 
 
-#if 0 /* ver 0.5.x までの表示形式 */
-void z80_debug(z80arch *z80, char *mes)
+void z80_status_show(z80arch *z80, int line, int old_style)
 {
-	static char flags[8] = "SZ.H.PNC";
-	char fbuf[10];
-	int  i, j;
-
-	for (j = 0, i = z80->AF.B.l; j < 8; j++, i <<= 1) {
-		fbuf[j] = i & 0x80 ? flags[j] : '.';
-	}
-	fbuf[8] = '\0';
-
-
-	if (mes) {
-		printf("%s", mes);
-	}
-	printf("    AF :%04X  BC :%04X  DE :%04X  HL :%04X   IX :%04X  IY :%04X\n",
-		   z80->AF.W, z80->BC.W, z80->DE.W, z80->HL.W, z80->IX.W, z80->IY.W);
-	printf("    AF':%04X  BC':%04X  DE':%04X  HL':%04X   (%d)\n",
-		   z80->AF1.W, z80->BC1.W, z80->DE1.W, z80->HL1.W, z80->icount);
-
-	printf("    PC :%04X  SP :%04X  FLAGS: [%s]   I:%02X IFF:%d IM:%d HALT:%d\n",
-		   z80->PC.W, z80->SP.W, fbuf, z80->I, z80->IFF, z80->IM, z80->HALT);
-	printf("\n    Prev Mnemonics -> ");
-	z80_line_disasm(z80, z80->PC_prev.W);
-	printf("\n    Next Mnemonics -> ");
-	z80_line_disasm(z80, z80->PC.W);
-	printf("\n\n");
-
-	fflush(stdout);
-}
-#else /* ver 0.6.0 以降の表示形式 */
-void z80_debug(z80arch *z80, char *mes)
-{
-	static const char flags[8] = "SZ.H.PNC";
+	static const char *flags = "SZ.H.PNC";
 	char fbuf[10];
 	char fbuf1[10];
 	int  i, j;
@@ -1532,41 +1550,421 @@ void z80_debug(z80arch *z80, char *mes)
 	fbuf1[8] = '\0';
 
 
-	if (mes) {
-		printf("%s", mes);
+	if (z80->cpuname) {
+		printf("[%s]\n", z80->cpuname);
 	}
-	printf("  AF:%04X[%s]  BC:%04X  DE:%04X  HL:%04X  IX:%04X"
-		   "  PC:%04X  I:%02X  IM:%d \n",
-		   z80->AF.W, fbuf, z80->BC.W, z80->DE.W, z80->HL.W, z80->IX.W,
-		   z80->PC.W, z80->I, z80->IM);
-	printf("  A':%04X[%s]  B':%04X  D':%04X  H':%04X  IY:%04X"
-		   "  SP:%04X  IFF:%d (%d)\n",
-		   z80->AF1.W, fbuf1, z80->BC1.W, z80->DE1.W, z80->HL1.W, z80->IY.W,
-		   z80->SP.W, z80->IFF, z80->icount <= 99999 ? z80->icount : 99999);
 
-	printf("            ");
-	z80_line_disasm(z80, z80->PC_prev.W);
-	printf("\n");
-	printf("    ------> ");
-	i = z80_line_disasm(z80, z80->PC.W);
-	printf("\n");
-	printf("            ");
-	z80_line_disasm(z80, z80->PC.W + i);
-	printf("\n");
+	if (old_style) {
+		/* ver 0.6.0 ~ 0.7.3 の表示形式 (とりあえず残しておく) */
+		int l = (line < 3) ? 3 : line;
+
+		printf(" AF:%04X[%s] BC:%04X  DE:%04X  HL:%04X  IX:%04X"
+			   "  PC:%04X  I:%02X IM:%d IFF:%d\n",
+			   z80->AF.W, fbuf, z80->BC.W, z80->DE.W, z80->HL.W, z80->IX.W,
+			   z80->PC.W, z80->I, z80->IM, z80->IFF);
+		printf(" A':%04X[%s] B':%04X  D':%04X  H':%04X  IY:%04X"
+			   "  SP:%04X  (ck=%u)\n",
+			   z80->AF1.W, fbuf1, z80->BC1.W, z80->DE1.W, z80->HL1.W, z80->IY.W,
+			   z80->SP.W, z80->ck);
+
+		j = 0;
+		for (i = 0; i < l; i++) {
+			char asmcode[36];
+			const char *indent;
+
+			if (i == 1) {
+				indent = "    ------> ";
+			} else {
+				indent = "            ";
+			}
+
+			if (i == 0) {
+				z80_line_disasm(z80, z80->PC_prev.W, asmcode);
+				j = 0;
+			} else {
+				j += z80_line_disasm(z80, z80->PC.W + j, asmcode);
+			}
+		
+			printf("%s%-36.36s", indent, asmcode);
+			printf("\n");
+		}
+
+	} else {
+		int l = (line < 5) ? 5 : line;
+
+		j = 0;
+		for (i = 0; i < l; i++) {
+			char asmcode[36];
+			const char *indent;
+
+			if (i == 1) {
+				indent = " => ";
+			} else {
+				indent = "    ";
+			}
+
+			if (i == 0) {
+				z80_line_disasm(z80, z80->PC_prev.W, asmcode);
+				j = 0;
+			} else {
+				j += z80_line_disasm(z80, z80->PC.W + j, asmcode);
+			}
+		
+			printf("%s%-36.36s", indent, asmcode);
+
+			switch (i) {
+			case 0:
+				printf("| AF:%04X    A':%04X    PC:%04X  I:%02X\n",
+					   z80->AF.W, z80->AF1.W, z80->PC.W, z80->I);
+				break;
+			case 1:
+				printf("| [%s] [%s] SP:%04X  IM:%d\n",
+					   fbuf, fbuf1, z80->SP.W, z80->IM);
+				break;
+			case 2:
+				printf("| BC:%04X    B':%04X    IX:%04X  IFF:%d\n",
+					   z80->BC.W, z80->BC1.W, z80->IX.W, z80->IFF);
+				break;
+			case 3:
+				printf("| DE:%04X    D':%04X    IY:%04X\n",
+					   z80->DE.W, z80->DE1.W, z80->IY.W);
+				break;
+			case 4:
+				printf("| HL:%04X    H':%04X    (ck=%u)\n",
+					   z80->HL.W, z80->HL1.W, z80->ck);
+				break;
+			default:
+				printf("\n");
+				break;
+			}
+		}
+	}
 
 	fflush(stdout);
 }
+
+
+/*************************************************************************
+ * ブレークポイント
+ *************************************************************************/
+static const char *breakpoint_type_str[] = {
+	"PC",
+	"READ",
+	"WRITE",
+	"IN",
+	"OUT",
+	"FETCH",
+};
+
+static void update_breakpoint(z80arch *z80)
+{
+	int i;
+
+	z80->bp_by_pc = FALSE;
+	z80->bp_by_fetch = FALSE;
+	z80->bp_by_read = FALSE;
+	z80->bp_by_write = FALSE;
+	z80->bp_by_in = FALSE;
+	z80->bp_by_out = FALSE;
+
+	for (i = 0; i < BP_MAX; i++) {
+		if (z80->bp[i].used && z80->bp[i].enable) {
+			switch (z80->bp[i].type) {
+			case BP_TYPE_PC:
+				z80->bp_by_pc = TRUE;
+				break;
+			case BP_TYPE_READ:
+				z80->bp_by_fetch = TRUE;
+				z80->bp_by_read = TRUE;
+				break;
+			case BP_TYPE_WRITE:
+				z80->bp_by_write = TRUE;
+				break;
+			case BP_TYPE_IN:
+				z80->bp_by_in = TRUE;
+				break;
+			case BP_TYPE_OUT:
+				z80->bp_by_out = TRUE;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+}
+
+void z80_breakpoint_show(z80arch *z80)
+{
+	int i;
+	char addr[8];
+	char str[36];
+
+	printf("%s:\n", z80->cpuname ? z80->cpuname : "-");
+
+	for (i = 1; i < BP_MAX; i++) {
+		if (z80->bp[i].used == FALSE) {
+			sprintf(str, "    #%d      (none)      ", i);
+		} else {
+			int c;
+			c = z80->bp[i].enable
+				? (z80->bp[i].onetime ? 'T' : 'X')
+				: ' ';
+
+			switch (z80->bp[i].type) {
+			case BP_TYPE_PC:
+			case BP_TYPE_READ:
+			case BP_TYPE_WRITE:
+				sprintf(addr, "%04XH", z80->bp[i].addr & 0xffff);
+				break;
+			case BP_TYPE_IN:
+			case BP_TYPE_OUT:
+			default:
+				sprintf(addr, "  %02XH", z80->bp[i].addr & 0xff);
+				break;
+			}
+
+			sprintf(str, "    #%d  [%c] %-6s %s",
+					i, c, breakpoint_type_str[z80->bp[i].type], addr);
+		}
+		printf("%s\n", str);
+	}
+}
+
+
+int z80_breakpoint_if_step_or_next(z80arch *z80, int do_next)
+{
+	int use_breakpoint = FALSE;
+	byte code;
+	word addr;
+
+	/* (z80->fetch)() 呼び出し時にブレークポイントに引っかからないようにする。
+	 * この変数は update_breakpoint() で再セットされるので問題なし */
+	z80->bp_by_pc = FALSE;
+
+
+	addr = z80->PC.W;
+	code = (z80->fetch)(addr);
+
+	if (code          == 0xcd ||		/* CALL nn    = 11001101B */
+		(code & 0xc7) == 0xc4) {		/* CALL cc,nn = 11ccc100B */
+		addr += 3;
+		use_breakpoint = TRUE;
+	}
+	if ((code & 0xc7) == 0xc7) {		/* RST p      = 11ttt111B */
+		addr += 1;
+		use_breakpoint = TRUE;
+	}
+	if (do_next) {
+#if 0
+		if ((code & 0xc7) == 0xc2) {		/* JP cc,nn   = 11ccc010B */
+			addr += 3;
+			use_breakpoint = TRUE;
+		}
+		if ((code & 0x27) == 0x20) {		/* JR cc,e    = 001cc000B */
+			addr += 2;
+			use_breakpoint = TRUE;
+		}
 #endif
+		if (code == 0x10) {					/* DJNZ e     = 00010000B */
+			addr += 2;
+			use_breakpoint = TRUE;
+		}
+		if (code == 0xed) {					/* LDIR/LDDR/CPIR/CPDR etc */
+			code = (z80->fetch)(addr + 1);
+			if ((code & 0xf4) == 0xb0) {
+				addr += 2;
+				use_breakpoint = TRUE;
+			}
+		}
+		if (code == 0x76) {					/* HALT       = 01100110B */
+			addr += 1;
+			use_breakpoint = TRUE;
+		}
+	}
+
+	if (use_breakpoint) {
+		z80->bp[BP_NUM_FOR_SYSTEM].used = TRUE;
+		z80->bp[BP_NUM_FOR_SYSTEM].enable = TRUE;
+		z80->bp[BP_NUM_FOR_SYSTEM].onetime = TRUE;
+		z80->bp[BP_NUM_FOR_SYSTEM].type = BP_TYPE_PC;
+		z80->bp[BP_NUM_FOR_SYSTEM].addr = addr;
+	} else {
+		z80->bp[BP_NUM_FOR_SYSTEM].used = FALSE;
+	}
+
+	update_breakpoint(z80);
+	return use_breakpoint;
+}
+
+
+void z80_breakpoint_clear(z80arch *z80)
+{
+	int i;
+	for (i = 0; i < BP_MAX; i++) {
+		z80->bp[i].used = FALSE;
+	}
+
+	update_breakpoint(z80);
+}
+
+int z80_breakpoint_ctrl(z80arch *z80, int number, int ctrl)
+{
+	if (! BETWEEN(0, number, BP_MAX)) {
+		return 0;
+	}
+	if (z80->bp[number].used == FALSE) {
+		return 0;
+	}
+
+	switch (ctrl) {
+	case BP_CTRL_ENABLE:
+		z80->bp[number].enable = TRUE;
+		break;
+	case BP_CTRL_DISABLE:
+		z80->bp[number].enable = FALSE;
+		break;
+	case BP_CTRL_TEMPORARY:
+		z80->bp[number].onetime = TRUE;
+		break;
+	case BP_CTRL_LASTING:
+		z80->bp[number].onetime = FALSE;
+		break;
+	default:
+		z80->bp[number].used = FALSE;
+		break;
+	}
+
+	update_breakpoint(z80);
+	return 1;
+}
+
+int z80_breakpoint_set(z80arch *z80, int number, int onetime, int type, int addr)
+{
+	int i;
+	if (! BETWEEN(0, number, BP_MAX)) {
+		return 0;
+	}
+
+	/* 重複を避けるため、同じ設定があれば予め削除しておく */
+	for (i = 1; i < BP_MAX; i++) {
+		if ((z80->bp[i].used) &&
+			(z80->bp[i].type == type) &&
+			(z80->bp[i].addr == addr)) {
+			z80->bp[i].used = FALSE;
+			break;
+		}
+	}
+
+	/* number未指定時は、空いている番号を探す */
+	if (number == 0) {
+		for (i = 1; i < BP_MAX; i++) {
+			if (z80->bp[i].used == FALSE) {
+				number = i;
+				break;
+			}
+		}
+	}
+
+	if (number) {
+		z80->bp[number].used = TRUE;
+		z80->bp[number].enable= TRUE;
+		z80->bp[number].onetime = onetime;
+		z80->bp[number].type = type;
+		z80->bp[number].addr = addr;
+	}
+
+	update_breakpoint(z80);
+	return number;
+}
+
+void z80_breakpoint_test(z80arch *z80, int type, word addr, byte data)
+{
+	char factor[32];
+	int i;
+	int bp_type = (type == BP_TYPE_FETCH) ? BP_TYPE_READ : type;
+
+	for (i = 0; i < BP_MAX; i++) {
+		if ((z80->bp[i].used) &&
+			(z80->bp[i].enable) &&
+			(z80->bp[i].type == bp_type) &&
+			(z80->bp[i].addr == addr)) {
+
+			if (z80->bp[i].onetime) {
+				z80->bp[i].used = FALSE;
+			}
+
+			quasi88_debug();
+
+			if (i != BP_NUM_FOR_SYSTEM) {
+				switch(type) {
+				case BP_TYPE_PC:
+					sprintf(factor, "%s",
+							breakpoint_type_str[type]);
+					break;
+				case BP_TYPE_READ:
+				case BP_TYPE_WRITE:
+				case BP_TYPE_FETCH:
+					sprintf(factor, "%s  addr=%04XH, data=%02XH",
+							breakpoint_type_str[type], addr, data);
+					break;
+				case BP_TYPE_IN:
+				case BP_TYPE_OUT:
+				default:
+					sprintf(factor, "%s  port=%02XH, data=%02XH",
+							breakpoint_type_str[type], addr, data);
+					break;
+				}
+
+				printf("*** Break at %04XH *** ( %s[#%d] : %s )\n",
+					   z80->PC.W, z80->cpuname ? z80->cpuname : "-",
+					   i, factor);
+			}
+			break;
+		}
+	}
+}
+
+void z80_return_break_set(z80arch *z80, int set)
+{
+	z80->return_break_enable = (set) ? TRUE : FALSE;
+	z80->return_break_count = 0;
+}
+
+void z80_return_break_call(z80arch *z80)
+{
+	/* if (z80->return_break_enable) */
+	{
+		z80->return_break_count ++;
+	}
+}
+
+void z80_return_break_test(z80arch *z80)
+{
+	/* if (z80->return_break_enable) */
+	{
+		if (z80->return_break_count > 0) {
+			z80->return_break_count--;
+		} else {
+			z80->return_break_enable = FALSE;
+
+			quasi88_debug();
+		}
+	}
+}
+
+void z80_system_break_clear(z80arch *z80)
+{
+	z80_breakpoint_ctrl(z80, BP_NUM_FOR_SYSTEM, BP_CTRL_CLEAR);
+	z80_return_break_set(z80, FALSE);
+}
+
+#endif  /* USE_MONITOR */
 
 
 
-
-
-
-/*---------------------------------------------------------------------------*/
-
-
-
+/*************************************************************************
+ * トレースログ
+ *************************************************************************/
 
 #ifdef DEBUGLOG
 

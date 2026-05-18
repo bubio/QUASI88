@@ -15,6 +15,8 @@ extern int menu_thema;							/* メニューのテーマ */
 void menu_set_thema(int thema);
 int  menu_get_thema(void);
 
+void menu_set_fullscreen(void);
+
 
 enum {
 	FILENAME_CODING_AUTO = -1,
@@ -35,7 +37,9 @@ enum {
 	MENU_MODE_PAUSE,
 	MENU_MODE_ASKRESET,
 	MENU_MODE_ASKSPEEDUP,
-	MENU_MODE_ASKDISKCHANGE,
+	MENU_MODE_ASKOPENFILE,
+	MENU_MODE_ASKSELECTDISK,
+	MENU_MODE_ASKSTATEFILE,
 	MENU_MODE_ASKQUIT,
 	MENU_MODE
 };

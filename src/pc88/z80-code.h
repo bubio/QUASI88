@@ -33,10 +33,10 @@
 		z80->ACC = z80->HL.B.l;
 		break;
 	case LD_A_xHL:
-		z80->ACC = M_RDMEM(z80->HL.W);
+		z80->ACC = M_RDMEM(z80, z80->HL.W);
 		break;
 	case LD_A_8:
-		z80->ACC = M_RDMEM(z80->PC.W++);
+		z80->ACC = M_RDMEM(z80, z80->PC.W++);
 		break;
 
 	case LD_B_A:
@@ -61,10 +61,10 @@
 		z80->BC.B.h = z80->HL.B.l;
 		break;
 	case LD_B_xHL:
-		z80->BC.B.h = M_RDMEM(z80->HL.W);
+		z80->BC.B.h = M_RDMEM(z80, z80->HL.W);
 		break;
 	case LD_B_8:
-		z80->BC.B.h = M_RDMEM(z80->PC.W++);
+		z80->BC.B.h = M_RDMEM(z80, z80->PC.W++);
 		break;
 
 	case LD_C_A:
@@ -89,10 +89,10 @@
 		z80->BC.B.l = z80->HL.B.l;
 		break;
 	case LD_C_xHL:
-		z80->BC.B.l = M_RDMEM(z80->HL.W);
+		z80->BC.B.l = M_RDMEM(z80, z80->HL.W);
 		break;
 	case LD_C_8:
-		z80->BC.B.l = M_RDMEM(z80->PC.W++);
+		z80->BC.B.l = M_RDMEM(z80, z80->PC.W++);
 		break;
 
 	case LD_D_A:
@@ -117,10 +117,10 @@
 		z80->DE.B.h = z80->HL.B.l;
 		break;
 	case LD_D_xHL:
-		z80->DE.B.h = M_RDMEM(z80->HL.W);
+		z80->DE.B.h = M_RDMEM(z80, z80->HL.W);
 		break;
 	case LD_D_8:
-		z80->DE.B.h = M_RDMEM(z80->PC.W++);
+		z80->DE.B.h = M_RDMEM(z80, z80->PC.W++);
 		break;
 
 	case LD_E_A:
@@ -145,10 +145,10 @@
 		z80->DE.B.l = z80->HL.B.l;
 		break;
 	case LD_E_xHL:
-		z80->DE.B.l = M_RDMEM(z80->HL.W);
+		z80->DE.B.l = M_RDMEM(z80, z80->HL.W);
 		break;
 	case LD_E_8:
-		z80->DE.B.l = M_RDMEM(z80->PC.W++);
+		z80->DE.B.l = M_RDMEM(z80, z80->PC.W++);
 		break;
 
 	case LD_H_A:
@@ -173,10 +173,10 @@
 		z80->HL.B.h = z80->HL.B.l;
 		break;
 	case LD_H_xHL:
-		z80->HL.B.h = M_RDMEM(z80->HL.W);
+		z80->HL.B.h = M_RDMEM(z80, z80->HL.W);
 		break;
 	case LD_H_8:
-		z80->HL.B.h = M_RDMEM(z80->PC.W++);
+		z80->HL.B.h = M_RDMEM(z80, z80->PC.W++);
 		break;
 
 	case LD_L_A:
@@ -201,59 +201,59 @@
 		z80->HL.B.l = z80->HL.B.l;
 		break;
 	case LD_L_xHL:
-		z80->HL.B.l = M_RDMEM(z80->HL.W);
+		z80->HL.B.l = M_RDMEM(z80, z80->HL.W);
 		break;
 	case LD_L_8:
-		z80->HL.B.l = M_RDMEM(z80->PC.W++);
+		z80->HL.B.l = M_RDMEM(z80, z80->PC.W++);
 		break;
 
 	case LD_xHL_A:
-		M_WRMEM(z80->HL.W, z80->ACC);
+		M_WRMEM(z80, z80->HL.W, z80->ACC);
 		break;
 	case LD_xHL_B:
-		M_WRMEM(z80->HL.W, z80->BC.B.h);
+		M_WRMEM(z80, z80->HL.W, z80->BC.B.h);
 		break;
 	case LD_xHL_C:
-		M_WRMEM(z80->HL.W, z80->BC.B.l);
+		M_WRMEM(z80, z80->HL.W, z80->BC.B.l);
 		break;
 	case LD_xHL_D:
-		M_WRMEM(z80->HL.W, z80->DE.B.h);
+		M_WRMEM(z80, z80->HL.W, z80->DE.B.h);
 		break;
 	case LD_xHL_E:
-		M_WRMEM(z80->HL.W, z80->DE.B.l);
+		M_WRMEM(z80, z80->HL.W, z80->DE.B.l);
 		break;
 	case LD_xHL_H:
-		M_WRMEM(z80->HL.W, z80->HL.B.h);
+		M_WRMEM(z80, z80->HL.W, z80->HL.B.h);
 		break;
 	case LD_xHL_L:
-		M_WRMEM(z80->HL.W, z80->HL.B.l);
+		M_WRMEM(z80, z80->HL.W, z80->HL.B.l);
 		break;
 	case LD_xHL_8:
-		M_WRMEM(z80->HL.W, M_RDMEM(z80->PC.W++));
+		M_WRMEM(z80, z80->HL.W, M_RDMEM(z80, z80->PC.W++));
 		break;
 
 	case LD_A_xBC:
-		z80->ACC = M_RDMEM(z80->BC.W);
+		z80->ACC = M_RDMEM(z80, z80->BC.W);
 		break;
 	case LD_A_xDE:
-		z80->ACC = M_RDMEM(z80->DE.W);
+		z80->ACC = M_RDMEM(z80, z80->DE.W);
 		break;
 	case LD_A_x16:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		z80->ACC = M_RDMEM(J.W);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		z80->ACC = M_RDMEM(z80, J.W);
 		break;
 
 	case LD_xBC_A:
-		M_WRMEM(z80->BC.W, z80->ACC);
+		M_WRMEM(z80, z80->BC.W, z80->ACC);
 		break;
 	case LD_xDE_A:
-		M_WRMEM(z80->DE.W, z80->ACC);
+		M_WRMEM(z80, z80->DE.W, z80->ACC);
 		break;
 	case LD_x16_A:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		M_WRMEM(J.W, z80->ACC);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		M_WRMEM(z80, J.W, z80->ACC);
 		break;
 
 
@@ -277,16 +277,16 @@
 		break;
 
 	case LD_x16_HL:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		M_WRMEM(J.W++, z80->HL.B.l);
-		M_WRMEM(J.W,  z80->HL.B.h);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		M_WRMEM(z80, J.W++, z80->HL.B.l);
+		M_WRMEM(z80, J.W,  z80->HL.B.h);
 		break;
 	case LD_HL_x16:
-		J.B.l = M_RDMEM(z80->PC.W++);
-		J.B.h = M_RDMEM(z80->PC.W++);
-		z80->HL.B.l = M_RDMEM(J.W++);
-		z80->HL.B.h = M_RDMEM(J.W);
+		J.B.l = M_RDMEM(z80, z80->PC.W++);
+		J.B.h = M_RDMEM(z80, z80->PC.W++);
+		z80->HL.B.l = M_RDMEM(z80, J.W++);
+		z80->HL.B.h = M_RDMEM(z80, J.W);
 		break;
 
 	case PUSH_BC:
@@ -340,11 +340,11 @@
 		M_ADD_A(z80->HL.B.l);
 		break;
 	case ADD_A_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_ADD_A(I);
 		break;
 	case ADD_A_8:
-		I = M_RDMEM(z80->PC.W++);
+		I = M_RDMEM(z80, z80->PC.W++);
 		M_ADD_A(I);
 		break;
 
@@ -370,11 +370,11 @@
 		M_ADC_A(z80->HL.B.l);
 		break;
 	case ADC_A_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_ADC_A(I);
 		break;
 	case ADC_A_8:
-		I = M_RDMEM(z80->PC.W++);
+		I = M_RDMEM(z80, z80->PC.W++);
 		M_ADC_A(I);
 		break;
 
@@ -400,11 +400,11 @@
 		M_SUB(z80->HL.B.l);
 		break;
 	case SUB_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SUB(I);
 		break;
 	case SUB_8:
-		I = M_RDMEM(z80->PC.W++);
+		I = M_RDMEM(z80, z80->PC.W++);
 		M_SUB(I);
 		break;
 
@@ -430,11 +430,11 @@
 		M_SBC_A(z80->HL.B.l);
 		break;
 	case SBC_A_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SBC_A(I);
 		break;
 	case SBC_A_8:
-		I = M_RDMEM(z80->PC.W++);
+		I = M_RDMEM(z80, z80->PC.W++);
 		M_SBC_A(I);
 		break;
 
@@ -460,11 +460,11 @@
 		M_AND(z80->HL.B.l);
 		break;
 	case AND_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_AND(I);
 		break;
 	case AND_8:
-		I = M_RDMEM(z80->PC.W++);
+		I = M_RDMEM(z80, z80->PC.W++);
 		M_AND(I);
 		break;
 
@@ -490,11 +490,11 @@
 		M_OR(z80->HL.B.l);
 		break;
 	case OR_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_OR(I);
 		break;
 	case OR_8:
-		I = M_RDMEM(z80->PC.W++);
+		I = M_RDMEM(z80, z80->PC.W++);
 		M_OR(I);
 		break;
 
@@ -520,11 +520,11 @@
 		M_XOR(z80->HL.B.l);
 		break;
 	case XOR_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_XOR(I);
 		break;
 	case XOR_8:
-		I = M_RDMEM(z80->PC.W++);
+		I = M_RDMEM(z80, z80->PC.W++);
 		M_XOR(I);
 		break;
 
@@ -550,11 +550,11 @@
 		M_CP(z80->HL.B.l);
 		break;
 	case CP_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_CP(I);
 		break;
 	case CP_8:
-		I = M_RDMEM(z80->PC.W++);
+		I = M_RDMEM(z80, z80->PC.W++);
 		M_CP(I);
 		break;
 
@@ -580,9 +580,9 @@
 		M_INC(z80->HL.B.l);
 		break;
 	case INC_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_INC(I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 
 	case DEC_A:
@@ -607,9 +607,9 @@
 		M_DEC(z80->HL.B.l);
 		break;
 	case DEC_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_DEC(I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 
 		/* 16ビット算術演算命令 */
@@ -667,10 +667,10 @@
 		z80->HL.W = J.W;
 		break;
 	case EX_xSP_HL:
-		J.B.l = M_RDMEM(z80->SP.W);
-		M_WRMEM(z80->SP.W++, z80->HL.B.l);
-		J.B.h = M_RDMEM(z80->SP.W);
-		M_WRMEM(z80->SP.W--, z80->HL.B.h);
+		J.B.l = M_RDMEM(z80, z80->SP.W);
+		M_WRMEM(z80, z80->SP.W++, z80->HL.B.l);
+		J.B.h = M_RDMEM(z80, z80->SP.W);
+		M_WRMEM(z80, z80->SP.W--, z80->HL.B.h);
 		z80->HL.W = J.W;
 		break;
 	case EXX:
@@ -964,11 +964,11 @@
 		/* 入出力命令 */
 
 	case IN_A_x8:
-		I = M_RDIO(M_RDMEM(z80->PC.W++));
+		I = M_RDIO(z80, M_RDMEM(z80, z80->PC.W++));
 		z80->ACC = I;
 		break;
 	case OUT_x8_A:
-		M_WRIO(M_RDMEM(z80->PC.W++), z80->ACC);
+		M_WRIO(z80, M_RDMEM(z80, z80->PC.W++), z80->ACC);
 		break;
 
 

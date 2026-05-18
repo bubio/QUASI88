@@ -5,6 +5,7 @@
  ************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 
 #include "quasi88.h"
 #include "debug.h"
@@ -254,7 +255,7 @@ void sub_INT_update(void)
 
 	/* D.C.コネクションとか… */
 
-	if (sub_load_rate && cpu_timing < 2) {
+	if (sub_load_rate && cpu_timing < 1) {
 		sub_total_state += z80sub_cpu.state0;
 		if (sub_total_state / sub_load_rate >= state_of_vsync) {
 
@@ -311,21 +312,6 @@ void pc88sub_init(int init)
 		z80_reset(&z80sub_cpu);
 	}
 
-	pc88sub_bus_setup();
-
-	z80sub_cpu.intr_update = sub_INT_update;
-	z80sub_cpu.intr_ack    = sub_INT_chk;
-
-	z80sub_cpu.break_if_halt = TRUE;
-	z80sub_cpu.PC_prev       = z80sub_cpu.PC; /* dummy for monitor */
-
-#ifdef  DEBUGLOG
-	z80sub_cpu.log = TRUE;
-#else
-	z80sub_cpu.log = FALSE;
-#endif
-
-
 	if (init == INIT_POWERON || init == INIT_RESET) {
 
 		sub_INT_init();
@@ -352,135 +338,12 @@ void pc88sub_term(void)
 
 
 
-
-
-
-
-
-/***********************************************************************
- * ブレークポイント関連
- ************************************************************************/
-INLINE void check_break_point(int type, word addr, char *str)
-{
-	int i;
-
-	if (quasi88_is_monitor()) {
-		/* モニターモード時はスルー */
-		return;
-	}
-	for (i = 0; i < NR_BP; i++) {
-		if (break_point[BP_SUB][i].type == type &&
-			break_point[BP_SUB][i].addr == addr) {
-			printf("*** Break at %04x *** ( SUB[#%d] : %s %04x )\n",
-				   z80sub_cpu.PC.W, i + 1, str, addr);
-			quasi88_debug();
-			break;
-		}
-	}
-}
-
-byte sub_fetch_with_BP(word addr)
-{
-	check_break_point(BP_READ, addr, "FETCH from");
-	return sub_fetch(addr);
-}
-
-byte sub_mem_read_with_BP(word addr)
-{
-	check_break_point(BP_READ, addr, "READ from");
-	return sub_mem_read(addr);
-}
-
-void sub_mem_write_with_BP(word addr, byte data)
-{
-	check_break_point(BP_WRITE, addr, "WRITE to");
-	sub_mem_write(addr, data);
-}
-
-byte sub_io_in_with_BP(byte port)
-{
-	check_break_point(BP_IN, port, "IN from");
-	return sub_io_in(port);
-}
-
-void sub_io_out_with_BP(byte port, byte data)
-{
-	check_break_point(BP_OUT, port, "OUT to");
-	sub_io_out(port, data);
-}
-
-
-
-
-
-
 /***********************************************************************
  *
  ************************************************************************/
-void pc88sub_bus_setup(void)
+void pc88sub_cpu_init(void)
 {
-#ifdef USE_MONITOR
-
-	int   i, buf[4];
-	for (i = 0; i < 4; i++) {
-		buf[i] = 0;
-	}
-	for (i = 0; i < NR_BP; i++) {
-		switch (break_point[BP_SUB][i].type) {
-		case BP_READ:
-			buf[0]++;
-			break;
-		case BP_WRITE:
-			buf[1]++;
-			break;
-		case BP_IN:
-			buf[2]++;
-			break;
-		case BP_OUT:
-			buf[3]++;
-			break;
-		}
-	}
-
-	if (memory_wait) {
-		if (buf[0]) {
-			z80sub_cpu.fetch = sub_fetch_with_BP;
-		} else {
-			z80sub_cpu.fetch = sub_fetch;
-		}
-	} else {
-		if (buf[0]) {
-			z80sub_cpu.fetch = sub_mem_read_with_BP;
-		} else {
-			z80sub_cpu.fetch = sub_mem_read;
-		}
-	}
-
-	if (buf[0]) {
-		z80sub_cpu.mem_read = sub_mem_read_with_BP;
-	} else {
-		z80sub_cpu.mem_read = sub_mem_read;
-	}
-
-	if (buf[1]) {
-		z80sub_cpu.mem_write = sub_mem_write_with_BP;
-	} else {
-		z80sub_cpu.mem_write = sub_mem_write;
-	}
-
-	if (buf[2]) {
-		z80sub_cpu.io_read = sub_io_in_with_BP;
-	} else {
-		z80sub_cpu.io_read = sub_io_in;
-	}
-
-	if (buf[3]) {
-		z80sub_cpu.io_write = sub_io_out_with_BP;
-	} else {
-		z80sub_cpu.io_write = sub_io_out;
-	}
-
-#else
+	memset(&z80sub_cpu, 0, sizeof(z80sub_cpu));
 
 	if (memory_wait) {
 		z80sub_cpu.fetch = sub_fetch;
@@ -492,7 +355,31 @@ void pc88sub_bus_setup(void)
 	z80sub_cpu.io_read   = sub_io_in;
 	z80sub_cpu.io_write  = sub_io_out;
 
+	z80sub_cpu.intr_update = sub_INT_update;
+	z80sub_cpu.intr_ack    = sub_INT_chk;
+
+	z80sub_cpu.break_if_halt = TRUE;
+
+
+#ifdef  USE_MONITOR
+	z80sub_cpu.cpuname       = "SUB";
+	z80sub_cpu.PC_prev       = z80sub_cpu.PC; /* dummy for monitor */
 #endif
+
+#ifdef  DEBUGLOG
+	z80sub_cpu.log = TRUE;
+#else
+	z80sub_cpu.log = FALSE;
+#endif
+}
+
+void pc88sub_cpu_update(void)
+{
+	if (memory_wait) {
+		z80sub_cpu.fetch = sub_fetch;
+	} else {
+		z80sub_cpu.fetch = sub_mem_read;
+	}
 }
 
 

@@ -26,18 +26,10 @@
 
 static int menu_boot_clock_async;		/* リセット時にクロック指定同期する? */
 
-T_RESET_CFG reset_req;					/* リセット時に要求する設定を、保存 */
-
 /* 起動デバイスの制御に必要 */
 static Q8tkWidget *widget_reset_boot;
 Q8tkWidget        *widget_dipsw_b_boot_disk;
 Q8tkWidget        *widget_dipsw_b_boot_rom;
-
-
-/* メニュー下部のリセットと、リセットタグのリセットを連動させたいので、
- * 片方が選択されたら、反対のも選択されるように、ウィジットを記憶 */
-Q8tkWidget *widget_reset_basic[2][4];
-Q8tkWidget *widget_reset_clock[2][2];
 
 
 /*----------------------------------------------------------------------*/
@@ -50,8 +42,6 @@ static void cb_reset_basic(UNUSED_WIDGET, void *p)
 {
 	if (reset_req.boot_basic != P2INT(p)) {
 		reset_req.boot_basic = P2INT(p);
-
-		q8tk_toggle_button_set_state(widget_reset_basic[ 1 ][ P2INT(p) ], TRUE);
 	}
 }
 
@@ -66,15 +56,6 @@ static Q8tkWidget *menu_reset_basic(void)
 		list = PACK_RADIO_BUTTONS(box,
 								  data_reset_basic, COUNTOF(data_reset_basic),
 								  get_reset_basic(), cb_reset_basic);
-
-		/* リストを手繰って、全ウィジットを取得 */
-		widget_reset_basic[0][BASIC_V2 ] = list->data;
-		list = list->next;
-		widget_reset_basic[0][BASIC_V1H] = list->data;
-		list = list->next;
-		widget_reset_basic[0][BASIC_V1S] = list->data;
-		list = list->next;
-		widget_reset_basic[0][BASIC_N  ] = list->data;
 	}
 
 	return box;
@@ -90,8 +71,6 @@ static void cb_reset_clock(UNUSED_WIDGET, void *p)
 {
 	if (reset_req.boot_clock_4mhz != P2INT(p)) {
 		reset_req.boot_clock_4mhz = P2INT(p);
-
-		q8tk_toggle_button_set_state(widget_reset_clock[ 1 ][ P2INT(p) ], TRUE);
 	}
 }
 static int get_reset_clock_async(void)
@@ -115,11 +94,6 @@ static Q8tkWidget *menu_reset_clock(void)
 		list = PACK_RADIO_BUTTONS(box,
 								  data_reset_clock, COUNTOF(data_reset_clock),
 								  get_reset_clock(), cb_reset_clock);
-
-		/* リストを手繰って、全ウィジットを取得 */
-		widget_reset_clock[0][CLOCK_4MHZ] = list->data;
-		list = list->next;
-		widget_reset_clock[0][CLOCK_8MHZ] = list->data;
 
 		/* 空行 */
 		PACK_LABEL(box, "");
@@ -456,7 +430,7 @@ static Q8tkWidget *menu_reset_current(void)
 
 /*----------------------------------------------------------------------*/
 /* この設定でリセットする */
-void cb_reset_now(UNUSED_WIDGET, UNUSED_PARM)
+static void cb_reset_now(UNUSED_WIDGET, UNUSED_PARM)
 {
 	/* CLOCK設定と、CPUクロックを同期させる */
 	if (menu_boot_clock_async == FALSE) {

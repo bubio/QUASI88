@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(QUASI88 VERSION 0.7.3 LANGUAGES C CXX)
+project(QUASI88 VERSION 0.7.4 LANGUAGES C CXX)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS deployment target" FORCE)
@@ -62,6 +62,7 @@ set(INCDIRS
     ${SRCDIR}/tk/q8tk
     ${SRCDIR}/ui
     ${SRCDIR}/ui/menu
+    ${SRCDIR}/mon
     ${SRCDIR}/snddrv
     ${SRCDIR}/sysdepend
     ${SRCDIR}/osdepend
@@ -128,14 +129,24 @@ set(SOURCES
     ${SRCDIR}/tk/q8tk/q8tk-signal.c
     ${SRCDIR}/tk/q8tk/q8tk-widget.c
     ${SRCDIR}/tk/q8tk/q8tk-window.c
-    ${SRCDIR}/ui/diskchange-top.c
+    ${SRCDIR}/ui/askopenfile-top.c
+    ${SRCDIR}/ui/askquit-top.c
+    ${SRCDIR}/ui/askreset-top.c
+    ${SRCDIR}/ui/askselectdisk-top.c
+    ${SRCDIR}/ui/askspeedup-top.c
+    ${SRCDIR}/ui/askstatefile-top.c
     ${SRCDIR}/ui/menu-top.c
     ${SRCDIR}/ui/pause-top.c
-    ${SRCDIR}/ui/quit-top.c
-    ${SRCDIR}/ui/reset-top.c
-    ${SRCDIR}/ui/speedup-top.c
     ${SRCDIR}/ui/statusbar.c
     ${SRCDIR}/ui/toolbar.c
+    ${SRCDIR}/mon/mon-arg.c
+    ${SRCDIR}/mon/mon-cmd.c
+    ${SRCDIR}/mon/mon-debug.c
+    ${SRCDIR}/mon/mon-image.c
+    ${SRCDIR}/mon/mon-memory.c
+    ${SRCDIR}/mon/mon-misc.c
+    ${SRCDIR}/mon/mon-set.c
+    ${SRCDIR}/mon/mon-util.c
     ${SRCDIR}/ui/menu/menu-about.c
     ${SRCDIR}/ui/menu/menu-common.c
     ${SRCDIR}/ui/menu/menu-cpu.c

@@ -10,6 +10,7 @@ typedef struct {
 } T_LAYOUT_BUILDIN;
 
 #ifdef USE_BUILDIN_NEWMODE
+#define BUILDIN_NEWMODEL_NAME		"<BUILDIN_NEWMODEL>"
 #define BUILDIN_NEWMODEL_W			920
 #define	BUILDIN_NEWMODEL_H			260
 #define	BUILDIN_NEWMODEL_SCALE_W	100
@@ -133,6 +134,7 @@ static const T_LAYOUT_BUILDIN buildin_newmodel[] = {
 #endif /* USE_BUILDIN_NEWMODE */
 
 #ifdef USE_BUILDIN_OLDMODE
+#define BUILDIN_OLDMODEL_NAME		"<BUILDIN_OLDMODEL>"
 #define BUILDIN_OLDMODEL_W			800
 #define BUILDIN_OLDMODEL_H			260
 #define BUILDIN_OLDMODEL_SCALE_W	100
@@ -244,6 +246,7 @@ static const T_LAYOUT_BUILDIN buildin_oldmodel[] = {
 };
 #endif /* USE_BUILDIN_OLDMODE */
 
+#define BUILDIN_JISKEY_NAME			"<BUILDIN_JISKEY>"
 #define BUILDIN_JISKEY_W			640
 #define BUILDIN_JISKEY_H			205
 #define BUILDIN_JISKEY_SCALE_W		100
@@ -324,6 +327,7 @@ static const T_LAYOUT_BUILDIN buildin_jiskey[] = {
 	{ KEYTOP_END          , 0                   ,     0,   0,   },
 };
 
+#define BUILDIN_TENKEY_NAME			"<BUILDIN_TENKEY>"
 #define BUILDIN_TENKEY_W			640
 #define BUILDIN_TENKEY_H			205
 #define BUILDIN_TENKEY_SCALE_W		100
@@ -386,6 +390,7 @@ static const T_LAYOUT_BUILDIN buildin_tenkey[] = {
 	{ KEYTOP_END          , 0                   ,     0,   0,   },
 };
 
+#define BUILDIN_GAMEKEY_NAME		"<BUILDIN_GAMEKEY>"
 #define BUILDIN_GAMEKEY_W			640
 #define BUILDIN_GAMEKEY_H			125
 #define BUILDIN_GAMEKEY_SCALE_W		100
@@ -426,12 +431,14 @@ typedef struct {
 	float sx, sy;					/* キー表示サイズ */
 } T_LAYOUT;
 
+#define TOUCHKEY_NAME_SZ	(32)
 typedef struct {
-	T_LAYOUT *layout;			/* レイアウト情報の配列 */
-	int sz_array;				/* 配列の数。最大 NR_KEYNO */
-	int base_width;				/* キーボード背景幅 */
-	int base_height;			/* キーボード背景高 */
-	int scale_w;				/* 表示時の横倍率 % */
-	int scale_h;				/* 表示時の縦倍率 % */
-	Uint8 r, g, b;				/* キーボード背景色 */
+	char name[TOUCHKEY_NAME_SZ];	/* レイアウト名 */
+	T_LAYOUT *layout;				/* レイアウト情報の配列 */
+	int sz_array;					/* 配列の数。最大 NR_KEYNO */
+	int base_width;					/* キーボード背景幅 */
+	int base_height;				/* キーボード背景高 */
+	int scale_w;					/* 表示時の横倍率 % */
+	int scale_h;					/* 表示時の縦倍率 % */
+	Uint8 r, g, b;					/* キーボード背景色 */
 } T_TOUCHKEY_LIST;

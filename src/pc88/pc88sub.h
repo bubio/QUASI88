@@ -10,6 +10,8 @@ extern int sub_load_rate;
 /* 関数 */
 
 
+void pc88sub_cpu_init(void);
+void pc88sub_cpu_update(void);
 void pc88sub_init(int init);
 void pc88sub_term(void);
 void pc88sub_bus_setup(void);

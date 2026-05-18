@@ -26,6 +26,10 @@
 #include "intr.h"
 #include "toolbar.h"
 
+
+/* リセット時に要求すべき設定 */
+T_RESET_CFG reset_req;
+
 /***********************************************************************
  * 各種動作パラメータの変更
  *      これらの関数は、ショートカットキー処理や、機種依存部のイベント
@@ -117,7 +121,7 @@ void quasi88_reset(const T_RESET_CFG *cfg)
 
 	emu_reset();
 
-	submenu_controll(CTRL_RESET);
+	toolbar_controll(CTRL_RESET);
 
 	if (verbose_proc) {
 		printf("Reset QUASI88...done\n");
@@ -145,10 +149,11 @@ int quasi88_stateload(int serial)
 
 	if (stateload_check_file_exist() == FALSE) {
 		/* ファイルなし */
-		if (quasi88_is_exec()) {
-			statusbar_message(STATUS_INFO,
-							  "State-Load file not found !",
-							  "ステートロード失敗!(ファイルなし)");
+		if (quasi88_is_exec() ||
+			quasi88_is_askstatefile()) {
+			emu_status_message_set(STATUS_INFO,
+								   "State-Load file not found !",
+								   "ステートロード失敗!(ファイルなし)");
 		}
 		/* メニューではダイアログ表示するので、ステータス表示は無しにする */
 
@@ -208,7 +213,8 @@ int quasi88_stateload(int serial)
 	}
 
 
-	if (quasi88_is_exec()) {
+	if (quasi88_is_exec() ||
+		quasi88_is_askstatefile()) {
 		if (success) {
 			emu_status_message_set(STATUS_INFO,
 								   "State-Load Successful",
@@ -258,15 +264,16 @@ int quasi88_statesave(int serial)
 	}
 
 
-	if (quasi88_is_exec()) {
+	if (quasi88_is_exec() ||
+		quasi88_is_askstatefile()) {
 		if (success) {
-			statusbar_message(STATUS_INFO,
-							  "State-Save Successful",
-							  "ステートセーブしました");
+			emu_status_message_set(STATUS_INFO,
+								   "State-Save Successful",
+								   "ステートセーブしました");
 		} else {
-			statusbar_message(STATUS_INFO,
-							  "State-Save Failed !",
-							  "ステートセーブ失敗!");
+			emu_status_message_set(STATUS_INFO,
+								   "State-Save Failed !",
+								   "ステートセーブ失敗!");
 		}
 	}
 	/* メニューではダイアログ表示するので、ステータス表示は無しにする */
@@ -437,7 +444,7 @@ void quasi88_cfg_set_wait_rate(int rate)
 			wait_vsync_setup(dt, wait_by_sleep);
 		}
 
-		submenu_controll(CTRL_CHG_WAIT);
+		toolbar_controll(CTRL_CHG_WAIT);
 	}
 }
 int quasi88_cfg_now_no_wait(void)
@@ -466,7 +473,7 @@ void quasi88_cfg_set_no_wait(int enable)
 			wait_vsync_setup(dt, wait_by_sleep);
 		}
 
-		submenu_controll(CTRL_CHG_NOWAIT);
+		toolbar_controll(CTRL_CHG_NOWAIT);
 	}
 }
 

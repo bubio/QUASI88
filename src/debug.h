@@ -40,15 +40,18 @@ void logz80_target(int debug_flag);
 
 
 extern int debug_profiler;
+extern char *file_profiler;
 
 #ifdef PROFILER
 enum {
-	PROF_LAPSE_RESET,
-	PROF_LAPSE_CPU,
+	PROF_LAPSE_SKIP,
+	PROF_LAPSE_START,
+	PROF_LAPSE_EVENT,
+	PROF_LAPSE_UI,
 	PROF_LAPSE_INPUT,
-	PROF_LAPSE_SND,
+	PROF_LAPSE_CPU,
+	PROF_LAPSE_PCM,
 	PROF_LAPSE_AUDIO,
-	PROF_LAPSE_CPU2,
 	PROF_LAPSE_BLIT,
 	PROF_LAPSE_VIDEO,
 	PROF_LAPSE_IDLE,
@@ -56,18 +59,16 @@ enum {
 };
 void profiler_init(void);
 void profiler_lapse(int type);
+void profiler_start(void);
+void profiler_stop(void);
 void profiler_exit(void);
-void profiler_current_time(void);
-void profiler_watch_start(void);
-void profiler_watch_stop(void);
 void profiler_video_output(int timing, int skip, int drawn);
 #else
 #define profiler_init()
 #define profiler_lapse(i)
+#define profiler_start()
+#define profiler_stop()
 #define profiler_exit()
-#define profiler_current_time()
-#define profiler_watch_start()
-#define profiler_watch_stop()
 #define profiler_video_output(t,s,d)
 #endif
 

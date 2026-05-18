@@ -106,11 +106,56 @@
 #define M_PO()		(!M_PE())
 
 
-#define M_FETCH(addr)			(z80->fetch)(addr)
-#define M_RDMEM(addr)			(z80->mem_read)(addr)
-#define M_WRMEM(addr,data)		(z80->mem_write)(addr,data)
-#define M_RDIO(addr)			(z80->io_read)(addr)
-#define M_WRIO(addr,data)		(z80->io_write)(addr,data)
+#ifdef  USE_MONITOR
+
+INLINE byte M_FETCH(z80arch *z80, word addr)
+{
+	byte data = (z80->fetch)(addr);
+	if (z80->bp_by_fetch) {
+		z80_breakpoint_test(z80, BP_TYPE_FETCH, addr, data);
+	}
+	return data;
+}
+INLINE byte M_RDMEM(z80arch *z80, word addr)
+{
+	byte data = (z80->mem_read)(addr);
+	if (z80->bp_by_read) {
+		z80_breakpoint_test(z80, BP_TYPE_READ, addr, data);
+	}
+	return data;
+}
+INLINE void M_WRMEM(z80arch *z80, word addr, byte data)
+{
+	(z80->mem_write)(addr, data);
+	if (z80->bp_by_write) {
+		z80_breakpoint_test(z80, BP_TYPE_WRITE, addr, data);
+	}
+}
+INLINE byte M_RDIO(z80arch *z80, byte addr)
+{
+	byte data = (z80->io_read)(addr);
+	if (z80->bp_by_in) {
+		z80_breakpoint_test(z80, BP_TYPE_IN, addr, data);
+	}
+	return data;
+}
+INLINE void M_WRIO(z80arch *z80, byte addr, byte data)
+{
+	(z80->io_write)(addr, data);
+	if (z80->bp_by_out) {
+		z80_breakpoint_test(z80, BP_TYPE_OUT, addr, data);
+	}
+}
+
+#else
+
+#define M_FETCH(z80, addr)			(z80->fetch)((addr))
+#define M_RDMEM(z80, addr)			(z80->mem_read)((addr))
+#define M_WRMEM(z80, addr, data)	(z80->mem_write)((addr), (data))
+#define M_RDIO(z80, addr)			(z80->io_read)((addr))
+#define M_WRIO(z80, addr, data)		(z80->io_write)((addr), (data))
+
+#endif
 
 
 
@@ -153,7 +198,10 @@ void z80_reset(z80arch *z80)
 
 	z80->skip_intr_chk = FALSE;
 
+#ifdef  USE_MONITOR
+	z80->ck        = 0;
 	z80->PC_prev.W = 0x0000;
+#endif
 }
 
 
@@ -257,54 +305,93 @@ void z80_reset(z80arch *z80)
  *      フラグ変化 : S  Z  H  PV N  C
  *                   ・ ・ ・ ・ ・ ・
  *------------------------------------------------------*/
-#define M_POP(reg)								\
-	do {										\
-		z80->reg.B.l = M_RDMEM( z80->SP.W++ );	\
-		z80->reg.B.h = M_RDMEM( z80->SP.W++ );	\
+#define M_POP(reg)									\
+	do {											\
+		z80->reg.B.l = M_RDMEM(z80, z80->SP.W++);	\
+		z80->reg.B.h = M_RDMEM(z80, z80->SP.W++);	\
 	} while(0)
 
-#define M_PUSH(reg)								\
-	do {										\
-		M_WRMEM( --z80->SP.W, z80->reg.B.h );	\
-		M_WRMEM( --z80->SP.W, z80->reg.B.l );	\
-	} while (0)
-
-#define M_CALL()								\
-	do {										\
-		J.B.l = M_RDMEM( z80->PC.W++ );			\
-		J.B.h = M_RDMEM( z80->PC.W++ );			\
-		M_WRMEM( --z80->SP.W, z80->PC.B.h );	\
-		M_WRMEM( --z80->SP.W, z80->PC.B.l );	\
-		z80->PC.W = J.W;						\
-		z80->state0 += 7;						\
+#define M_PUSH(reg)									\
+	do {											\
+		M_WRMEM(z80, --z80->SP.W, z80->reg.B.h);	\
+		M_WRMEM(z80, --z80->SP.W, z80->reg.B.l);	\
 	} while (0)
 
 #define M_JP()									\
 	do {										\
-		J.B.l = M_RDMEM( z80->PC.W++ );			\
-		J.B.h = M_RDMEM( z80->PC.W );			\
+		J.B.l = M_RDMEM(z80, z80->PC.W++);		\
+		J.B.h = M_RDMEM(z80, z80->PC.W  );		\
 		z80->PC.W = J.W;						\
 	} while (0)
 
-#define M_JR()											\
-	do {												\
-		z80->PC.W += (offset)M_RDMEM(z80->PC.W) + 1;	\
-		z80->state0 += 5;								\
+#define M_JR()												\
+	do {													\
+		z80->PC.W += (offset)M_RDMEM(z80, z80->PC.W) + 1;	\
+		z80->state0 += 5;									\
 	} while (0)
 
-#define M_RET()									\
+#ifdef  USE_MONITOR
+
+#define M_CALL()								\
 	do {										\
-		z80->PC.B.l = M_RDMEM( z80->SP.W++ );	\
-		z80->PC.B.h = M_RDMEM( z80->SP.W++ );	\
-		z80->state0 += 6;						\
+		J.B.l = M_RDMEM(z80, z80->PC.W++);		\
+		J.B.h = M_RDMEM(z80, z80->PC.W++);		\
+		M_WRMEM(z80, --z80->SP.W, z80->PC.B.h);	\
+		M_WRMEM(z80, --z80->SP.W, z80->PC.B.l);	\
+		z80->PC.W = J.W;						\
+		z80->state0 += 7;						\
+		if (z80->return_break_enable) {			\
+			z80_return_break_call(z80);			\
+		};										\
+	} while (0)
+
+#define M_RET()										\
+	do {											\
+		z80->PC.B.l = M_RDMEM(z80, z80->SP.W++);	\
+		z80->PC.B.h = M_RDMEM(z80, z80->SP.W++);	\
+		z80->state0 += 6;							\
+		if (z80->return_break_enable) {				\
+			z80_return_break_test(z80);				\
+		};											\
 	} while (0)
 
 #define M_RST(addr)								\
 	do {										\
-		M_WRMEM( --z80->SP.W, z80->PC.B.h );	\
-		M_WRMEM( --z80->SP.W, z80->PC.B.l );	\
+		M_WRMEM(z80, --z80->SP.W, z80->PC.B.h);	\
+		M_WRMEM(z80, --z80->SP.W, z80->PC.B.l);	\
+		z80->PC.W = addr;						\
+		if (z80->return_break_enable) {			\
+			z80_return_break_call(z80);			\
+		};										\
+	} while (0)
+
+#else
+
+#define M_CALL()								\
+	do {										\
+		J.B.l = M_RDMEM(z80, z80->PC.W++);		\
+		J.B.h = M_RDMEM(z80, z80->PC.W++);		\
+		M_WRMEM(z80, --z80->SP.W, z80->PC.B.h);	\
+		M_WRMEM(z80, --z80->SP.W, z80->PC.B.l);	\
+		z80->PC.W = J.W;						\
+		z80->state0 += 7;						\
+	} while (0)
+
+#define M_RET()										\
+	do {											\
+		z80->PC.B.l = M_RDMEM(z80, z80->SP.W++);	\
+		z80->PC.B.h = M_RDMEM(z80, z80->SP.W++);	\
+		z80->state0 += 6;							\
+	} while (0)
+
+#define M_RST(addr)								\
+	do {										\
+		M_WRMEM(z80, --z80->SP.W, z80->PC.B.h);	\
+		M_WRMEM(z80, --z80->SP.W, z80->PC.B.l);	\
 		z80->PC.W = addr;						\
 	} while (0)
+
+#endif
 
 #define M_CALL_SKIP()		do { z80->PC.W += 2; } while (0)
 #define M_JP_SKIP()			do { z80->PC.W += 2; } while (0)
@@ -316,10 +403,10 @@ void z80_reset(z80arch *z80)
  *      フラグ変化 : S  Z  H  PV N  C
  *                   ・ ・ ・ ・ ・ ・
  *------------------------------------------------------*/
-#define M_LDWORD(reg)							\
-	do {										\
-		z80->reg.B.l = M_RDMEM( z80->PC.W++ );	\
-		z80->reg.B.h = M_RDMEM( z80->PC.W++ );	\
+#define M_LDWORD(reg)								\
+	do {											\
+		z80->reg.B.l = M_RDMEM(z80, z80->PC.W++);	\
+		z80->reg.B.h = M_RDMEM(z80, z80->PC.W++);	\
 	} while (0)
 
 /*------------------------------------------------------
@@ -430,14 +517,14 @@ void z80_reset(z80arch *z80)
  *------------------------------------------------------*/
 #define M_IN_C(reg)											\
 	do {													\
-		I = M_RDIO( z80->BC.B.l );							\
+		I = M_RDIO(z80, z80->BC.B.l);						\
 		reg = I;											\
 		z80->FLAG = SZP_table[reg] | (z80->FLAG & C_FLAG);	\
 	} while (0)
 
 #define M_OUT_C(reg)							\
     do {										\
-		M_WRIO( z80->BC.B.l, reg );				\
+		M_WRIO(z80, z80->BC.B.l, reg);			\
 	} while (0)
 
 
@@ -609,7 +696,7 @@ INLINE void z80_code_CB(z80arch *z80)
 	int  opcode;
 	byte I;
 
-	opcode = M_FETCH(z80->PC.W++);
+	opcode = M_FETCH(z80, z80->PC.W++);
 	z80->R ++;
 	z80->state0 += state_CB_table[ opcode ];
 
@@ -630,7 +717,7 @@ INLINE void z80_code_ED(z80arch *z80)
 	byte I;
 	pair J;
 
-	opcode = M_FETCH(z80->PC.W++);
+	opcode = M_FETCH(z80, z80->PC.W++);
 	z80->R ++;
 	z80->state0 += state_ED_table[ opcode ];
 
@@ -641,7 +728,7 @@ INLINE void z80_code_ED(z80arch *z80)
 		/* ED ?? */
 		if (verbose_z80) {
 			printf("Unrecognized instruction: ED %02X at PC=%04X\n",
-				   M_RDMEM(z80->PC.W - 1), z80->PC.W - 2);
+				   M_RDMEM(z80, z80->PC.W - 1), z80->PC.W - 2);
 		}
 		z80->state0 += 8; /* ED ?? == NOP NOP */
 	}
@@ -654,7 +741,7 @@ INLINE void z80_code_DD(z80arch *z80)
 	byte I;
 	pair J;
 
-	opcode = M_FETCH(z80->PC.W++);
+	opcode = M_FETCH(z80, z80->PC.W++);
 	z80->R ++;
 	z80->state0 += state_XX_table[ opcode ];
 
@@ -665,8 +752,8 @@ INLINE void z80_code_DD(z80arch *z80)
 	/* DD XX */
 	case PFX_CB:
 		/* DD CB の場合 */
-		J.W = z80->XX.W + (offset)M_RDMEM(z80->PC.W++);
-		opcode = M_FETCH(z80->PC.W++);
+		J.W = z80->XX.W + (offset)M_RDMEM(z80, z80->PC.W++);
+		opcode = M_FETCH(z80, z80->PC.W++);
 		z80->state0 += state_XXCB_table[ opcode ];
 
 		switch (opcode) {
@@ -676,14 +763,14 @@ INLINE void z80_code_DD(z80arch *z80)
 			/* DD CB ?? ?? */
 			printf("!! Internal Error in Z80-Emulator !!\n");
 			printf("  PC = %04x : code = DD CB %02X %02X\n", z80->PC.W - 4,
-				   M_RDMEM(z80->PC.W - 2), M_RDMEM(z80->PC.W - 1));
+				   M_RDMEM(z80, z80->PC.W - 2), M_RDMEM(z80, z80->PC.W - 1));
 		}
 		break;
 	default:
 		/* DD ?? */
 		if (verbose_z80) {
 			printf("Unrecognized instruction: DD %02X at PC=%04X\n",
-				   M_RDMEM(z80->PC.W - 1), z80->PC.W - 2);
+				   M_RDMEM(z80, z80->PC.W - 1), z80->PC.W - 2);
 		}
 		z80->PC.W --;
 		z80->R --;                 /* ?? の位置にPCを戻す */
@@ -702,7 +789,7 @@ INLINE void z80_code_FD(z80arch *z80)
 	byte I;
 	pair J;
 
-	opcode = M_FETCH(z80->PC.W++);
+	opcode = M_FETCH(z80, z80->PC.W++);
 	z80->R ++;
 	z80->state0 += state_XX_table[ opcode ];
 
@@ -713,8 +800,8 @@ INLINE void z80_code_FD(z80arch *z80)
 	/* FD XX */
 	case PFX_CB:
 		/* FD CB の場合 */
-		J.W = z80->XX.W + (offset)M_RDMEM(z80->PC.W++);
-		opcode = M_FETCH(z80->PC.W++);
+		J.W = z80->XX.W + (offset)M_RDMEM(z80, z80->PC.W++);
+		opcode = M_FETCH(z80, z80->PC.W++);
 		z80->state0 += state_XXCB_table[ opcode ];
 		switch (opcode) {
 #include "z80-codeXXCB.h"
@@ -723,14 +810,14 @@ INLINE void z80_code_FD(z80arch *z80)
 			/* FD CB ?? ?? */
 			printf("!! Internal Error in Z80-Emulator !!\n");
 			printf("  PC = %04x : code = FD CB %02X %02X\n", z80->PC.W - 4,
-				   M_RDMEM(z80->PC.W - 2), M_RDMEM(z80->PC.W - 1));
+				   M_RDMEM(z80, z80->PC.W - 2), M_RDMEM(z80, z80->PC.W - 1));
 		}
 		break;
 	default:
 		/* FD ?? */
 		if (verbose_z80) {
 			printf("Unrecognized instruction: FD %02X at PC=%04X\n",
-				   M_RDMEM(z80->PC.W - 1), z80->PC.W - 2);
+				   M_RDMEM(z80, z80->PC.W - 1), z80->PC.W - 2);
 		}
 		z80->PC.W --;
 		z80->R --;                 /* ?? の位置にPCを戻す */
@@ -758,7 +845,7 @@ static int z80_im0_interrupt(z80arch *z80, int level)
 		break;
 	case 1:
 		/* LD (BC),A */
-		M_WRMEM(z80->BC.W, z80->ACC);
+		M_WRMEM(z80, z80->BC.W, z80->ACC);
 		break;
 	case 2:
 		/* INC B */
@@ -766,7 +853,7 @@ static int z80_im0_interrupt(z80arch *z80, int level)
 		break;
 	case 3:
 		/* LD B,n */
-		z80->BC.B.h = M_RDMEM(z80->PC.W++);
+		z80->BC.B.h = M_RDMEM(z80, z80->PC.W++);
 		break;
 	case 4:
 		/* EX AF,AF' */
@@ -776,7 +863,7 @@ static int z80_im0_interrupt(z80arch *z80, int level)
 		break;
 	case 5:
 		/* LD A,(BC) */
-		z80->ACC = M_RDMEM(z80->BC.W);
+		z80->ACC = M_RDMEM(z80, z80->BC.W);
 		break;
 	case 6:
 		/* INC C */
@@ -784,7 +871,7 @@ static int z80_im0_interrupt(z80arch *z80, int level)
 		break;
 	case 7:
 		/* LD C,n */
-		z80->BC.B.l = M_RDMEM(z80->PC.W++);
+		z80->BC.B.l = M_RDMEM(z80, z80->PC.W++);
 		break;
 	default:
 		if (verbose_z80) {
@@ -825,9 +912,14 @@ INLINE void z80_interrupt(z80arch *z80)
 		case 2: /* IM 2 の時 */
 			M_PUSH(PC);
 			level = ((word)z80->I << 8) | (level << 1);
-			z80->PC.B.l = M_RDMEM(level++);
-			z80->PC.B.h = M_RDMEM(level);
+			z80->PC.B.l = M_RDMEM(z80, level++);
+			z80->PC.B.h = M_RDMEM(z80, level);
 			z80->state0 += 17;
+#ifdef  USE_MONITOR
+			if (z80->return_break_enable) {
+				z80_return_break_call(z80);
+			};
+#endif
 			break;
 		}
 	}
@@ -865,7 +957,15 @@ int z80_emu(z80arch *z80, int state_of_exec)
 	int  total_state = 0;			/* 関数終了時までに、処理したステート数 */
 
 
-	z80_state_goal = state_of_exec;
+#ifdef  USE_MONITOR
+	/* PCブレークポイントが設定してある場合は、1ステップ実行毎にチェック */
+	if (z80->bp_by_pc) {
+		z80_state_goal = 1;
+	} else
+#endif
+	{
+		z80_state_goal = state_of_exec;
+	}
 
 	for (;;) {
 
@@ -899,7 +999,7 @@ int z80_emu(z80arch *z80, int state_of_exec)
 #endif
 
 			/* 命令フェッチ */
-			opcode = M_FETCH(z80->PC.W++);
+			opcode = M_FETCH(z80, z80->PC.W++);
 			z80->R ++;
 			z80->state0 += state_table[ opcode ];
 
@@ -951,6 +1051,9 @@ int z80_emu(z80arch *z80, int state_of_exec)
 		(z80->intr_update)();
 
 		/* 処理した state 数の累計 */
+#ifdef  USE_MONITOR
+		z80->ck     += z80->state0;
+#endif
 		total_state += z80->state0;
 		z80->state0  = 0;
 
@@ -996,6 +1099,12 @@ int z80_emu(z80arch *z80, int state_of_exec)
 			 *        呼び出された時に加算されているので、まあよしとしよう。*/
 		}
 	}
+
+#ifdef  USE_MONITOR
+	if (z80->bp_by_pc) {
+		z80_breakpoint_test(z80, BP_TYPE_PC, z80->PC.W, 0 /* = dummy */ );
+	}
+#endif
 
 	return total_state;
 }

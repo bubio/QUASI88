@@ -96,6 +96,12 @@ static  Uchar   data_buf[ DATA_BUF_SIZE ];
  * FDC の各種情報ワーク
  *      ホストから受け取ったコマンド、処理後のステータスは、ここに。
  */
+typedef enum {						/* シーク状態 */
+	SEEK_STAT_STOP = 0,				/* シークなし */
+	SEEK_STAT_MOVE,					/* シーク中 */
+	SEEK_STAT_END,					/* シーク完了 */
+	SEEK_STAT_INTR					/* シーク完了割込 */
+} e_seek_stat;
 static struct {
 
 	int   command;					/* コマンド (enum値) */
@@ -109,12 +115,7 @@ static struct {
 	int   carry;					/* 次処理までのウェイト繰り越し分 */
 	int   gap3;						/* 次処理までのGAP3のウェイト分 */
 
-	enum {							/* シーク状態 */
-		SEEK_STAT_STOP = 0,			/* シークなし */
-		SEEK_STAT_MOVE,				/* シーク中 */
-		SEEK_STAT_END,				/* シーク完了 */
-		SEEK_STAT_INTR				/* シーク完了割込 */
-	}     seek_stat[MAX_DRIVE];
+	e_seek_stat	seek_stat[MAX_DRIVE];	/* シーク状態 */
 	int   seek_wait[MAX_DRIVE];		/* シーク用ウェイト */
 
 	int   srt_clk;					/* SRT (ウェイト換算) */
@@ -336,8 +337,8 @@ static const char *cmd_name[] = /* デバッグ用表示データ */
 void pc88fdc_break_point(void)
 {
 	int i;
-	for (i = 0; i < NR_BP; i++) {
-		if (break_point_fdc[i].type != BP_NONE) {
+	for (i = 0; i < NR_BPF; i++) {
+		if (break_point_fdc[i].type != BP_FDC_NONE) {
 			fdc_break_flag = TRUE;
 			return;
 		}
@@ -369,13 +370,13 @@ void print_fdc_status(int nStatus, int nDrive, int nTrack, int nSector)
 			oTrack[oDrive] = nTrack;
 			oSector[oDrive] = nSector;
 			switch (nStatus) {
-			case BP_READ:
+			case BP_FDC_READ:
 				c = 'R';
 				break;
-			case BP_WRITE:
+			case BP_FDC_WRITE:
 				c = 'W';
 				break;
-			case BP_DIAG:
+			case BP_FDC_DIAG:
 				c = 'D';
 				break;
 			}
@@ -389,7 +390,7 @@ void print_fdc_status(int nStatus, int nDrive, int nTrack, int nSector)
 	}
 
 	if (fdc_break_flag == TRUE) {
-		for (i = 0; i < NR_BP; i++) {
+		for (i = 0; i < NR_BPF; i++) {
 			if (break_point_fdc[i].type == nStatus &&
 				break_point_fdc[i].drive == nDrive + 1 &&
 				break_point_fdc[i].track == nTrack) {
@@ -398,13 +399,13 @@ void print_fdc_status(int nStatus, int nDrive, int nTrack, int nSector)
 					printf("*** Break at D:%d T:%d S:%d *** ",
 						   nDrive + 1, nTrack, nSector + 1);
 					switch (nStatus) {
-					case BP_READ:
+					case BP_FDC_READ:
 						printf("( Read )\n");
 						break;
-					case BP_WRITE:
+					case BP_FDC_WRITE:
 						printf("( Write )\n");
 						break;
-					case BP_DIAG:
+					case BP_FDC_DIAG:
 						printf("( Diag )\n");
 						break;
 					}
@@ -1518,7 +1519,7 @@ static int fdc_read_data(void)
 	int read_size, size, ptr, error;
 
 
-	print_fdc_status(((fdc.command == READ_DIAGNOSTIC) ? BP_DIAG : BP_READ),
+	print_fdc_status(((fdc.command == READ_DIAGNOSTIC) ? BP_FDC_DIAG : BP_FDC_READ),
 					 drv, drive[drv].track, drive[drv].sec);
 
 	/* STATUS を再設定 (READ(DELETED)DATAの場合は DATA CRCエラーのみ) */
@@ -1681,7 +1682,7 @@ static int fdc_write_data(void)
 	int  gap4_size  = sec_buf.size;
 	int  gap4_wrote = FALSE;
 
-	print_fdc_status(BP_WRITE, drv, drive[drv].track, drive[drv].sec);
+	print_fdc_status(BP_FDC_WRITE, drv, drive[drv].track, drive[drv].sec);
 
 
 	/* 処理の最中にディスクが交換されたりした時は、処理せず異常終了 */
@@ -3938,7 +3939,7 @@ void quasi88_set_fdc_wait(int wait)
 {
 	fdc_wait = wait;
 
-	submenu_controll(CTRL_CHG_FDCWAIT);
+	toolbar_controll(CTRL_CHG_FDCWAIT);
 }
 
 

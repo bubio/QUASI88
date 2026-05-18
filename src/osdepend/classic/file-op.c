@@ -309,7 +309,7 @@ OSD_FILE *osd_fopen(int type, const char *path, const char *mode)
 			}
 		}
 		/* ファイル名保持用のバッファを確保 */
-		st->path = malloc(strlen(path) + 1);
+		st->path = (char *)malloc(strlen(path) + 1);
 		if (st->path == NULL) {
 			return NULL;
 		}

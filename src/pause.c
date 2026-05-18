@@ -23,6 +23,8 @@
 #include "wait.h"
 #include "event.h"
 #include "q8tk.h"
+
+#include "pause-top.h"
 #include "toolbar.h"
 
 
@@ -118,7 +120,7 @@ void ui_askreset_init(void)
 	q8tk_main_start();
 
 	/* Q8TK メニュー生成 */
-	reset_top();
+	askreset_top();
 }
 
 /*
@@ -152,7 +154,7 @@ void ui_askspeedup_init(void)
 	q8tk_main_start();
 
 	/* Q8TK メニュー生成 */
-	speedup_top();
+	askspeedup_top();
 }
 
 /*
@@ -180,19 +182,87 @@ void ui_askspeedup_main(void)
 /*
  *
  */
-void ui_askdiskchange_init(void)
+void ui_askopenfile_init(void)
 {
 	/* Q8TK メインモード開始 */
 	q8tk_main_start();
 
 	/* Q8TK メニュー生成 */
-	diskchange_top();
+	askopenfile_top();
 }
 
 /*
  *
  */
-void ui_askdiskchange_main(void)
+void ui_askopenfile_main(void)
+{
+	/* 一時停止を抜けたら、ワーク再初期化 */
+	if (quasi88_event_flags & EVENT_MODE_CHANGED) {
+
+		/* Q8TK メインモード終了 */
+		q8tk_main_stop();
+
+	} else {
+
+		quasi88_event_flags |= EVENT_FRAME_UPDATE;
+	}
+}
+
+
+
+/***********************************************************************
+ * ディスクイメージ選択
+ ************************************************************************/
+/*
+ *
+ */
+void ui_askselectdisk_init(void)
+{
+	/* Q8TK メインモード開始 */
+	q8tk_main_start();
+
+	/* Q8TK メニュー生成 */
+	askselectdisk_top();
+}
+
+/*
+ *
+ */
+void ui_askselectdisk_main(void)
+{
+	/* 一時停止を抜けたら、ワーク再初期化 */
+	if (quasi88_event_flags & EVENT_MODE_CHANGED) {
+
+		/* Q8TK メインモード終了 */
+		q8tk_main_stop();
+
+	} else {
+
+		quasi88_event_flags |= EVENT_FRAME_UPDATE;
+	}
+}
+
+
+
+/***********************************************************************
+ * ステートファイル操作
+ ************************************************************************/
+/*
+ *
+ */
+void ui_askstatefile_init(void)
+{
+	/* Q8TK メインモード開始 */
+	q8tk_main_start();
+
+	/* Q8TK メニュー生成 */
+	askstatefile_top();
+}
+
+/*
+ *
+ */
+void ui_askstatefile_main(void)
 {
 	/* 一時停止を抜けたら、ワーク再初期化 */
 	if (quasi88_event_flags & EVENT_MODE_CHANGED) {
@@ -220,7 +290,7 @@ void ui_askquit_init(void)
 	q8tk_main_start();
 
 	/* Q8TK メニュー生成 */
-	quit_top();
+	askquit_top();
 }
 
 /*

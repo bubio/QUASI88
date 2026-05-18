@@ -32,8 +32,7 @@
 
 
 
-break_t       break_point[2][NR_BP];			/* ブレークポイント */
-break_drive_t break_point_fdc[NR_BP];			/* FDC ブレークポイント */
+break_drive_t break_point_fdc[NR_BPF];			/* FDC ブレークポイント */
 
 
 int cpu_timing = DEFAULT_CPU;					/* SUB-CPU 駆動方式 */
@@ -81,19 +80,10 @@ void emu_reset(void)
 }
 
 
+/* ブレークポイントのワーク初期化 (モニターモード用) */
 void emu_breakpoint_init(void)
 {
-	int i, j;
-	/* ブレークポイントのワーク初期化 (モニターモード用) */
-	for (j = 0; j < 2; j++) {
-		for (i = 0; i < NR_BP; i++) {
-			break_point[j][i].type = BP_NONE;
-		}
-	}
-
-	for (i = 0; i < NR_BP; i++) {
-		break_point_fdc[i].type = BP_NONE;
-	}
+	memset(&break_point_fdc, 0, sizeof(break_point_fdc));
 }
 
 
@@ -114,83 +104,15 @@ void emu_breakpoint_init(void)
 #define INFINITY_STEP	(0)
 #define ONLY_1STEP		(1)
 
-/*------------------------------------------------------------------------*/
-
-/*
- * ブレークポイント (タイプ PC) の有無をチェックする
- */
-
-static int check_break_point_PC(void)
-{
-	int i, j;
-
-	for (i = 0; i < NR_BP; i++) {
-		if (break_point[BP_MAIN][i].type == BP_PC) {
-			break;
-		}
-	}
-	for (j = 0; j < NR_BP; j++) {
-		if (break_point[BP_SUB][j].type == BP_PC) {
-			break;
-		}
-	}
-
-	if (i == NR_BP && j == NR_BP) {
-		return FALSE;
-	} else {
-		return TRUE;
-	}
-}
-
-/*------------------------------------------------------------------------*/
-
-/*
- * CPU を 1step 実行して、PCがブレークポイントに達したかチェックする
- *      ブレークポイント(タイプPC)未設定ならこの関数は使わず、z80_emu()を使う
- */
-
-static int z80_emu_with_breakpoint(z80arch *z80, int unused)
-{
-	int i, cpu, states;
-
-	/* 1step だけ実行 */
-	states = z80_emu(z80, 1);
-
-	if (z80 == &z80main_cpu) {
-		cpu = BP_MAIN;
-	} else {
-		cpu = BP_SUB;
-	}
-
-	for (i = 0; i < NR_BP; i++) {
-		if (break_point[cpu][i].type == BP_PC     &&
-			break_point[cpu][i].addr == z80->PC.W) {
-
-			if (i == BP_NUM_FOR_SYSTEM) {
-				break_point[cpu][i].type = BP_NONE;
-			}
-
-			printf("*** Break at %04x *** ( %s[#%d] : PC )\n",
-				   z80->PC.W, (cpu == BP_MAIN) ? "MAIN" : "SUB", i + 1);
-
-			quasi88_debug();
-		}
-	}
-
-	return states;
-}
-
 /*---------------------------------------------------------------------------*/
 
-static int passed_step;					/* 実行した step数 */
-static int target_step;					/* この step数に達するまで実行する */
-
-static int infinity, only_1step;
-static int (*z80_exec)(z80arch *, int);
+static int infinity;
 
 
 void emu_init(void)
 {
+	int target_step;					/* この step数に達するまで実行する */
+
 	/*xmame_sound_update();*/
 	xmame_update_video_and_audio();
 	event_update();
@@ -202,17 +124,7 @@ void emu_init(void)
 	/*set_screen_dirty_palette();*/
 
 
-	/* ブレークポイント設定の有無で、呼び出す関数を変える */
-	if (check_break_point_PC()) {
-		z80_exec = z80_emu_with_breakpoint;
-	} else {
-		z80_exec = z80_emu;
-	}
-
-
 	/* GO/TRACE/STEP/CHANGE に応じて処理の繰り返し回数を決定 */
-
-	passed_step = 0;
 
 	switch (emu_mode_execute) {
 	default:
@@ -220,28 +132,24 @@ void emu_init(void)
 		/* 無限に実行 */
 		target_step = 0;
 		infinity    = INFINITY_STEP;
-		only_1step  = ONLY_1STEP;
 		break;
 
 	case TRACE:
 		/* 指定ステップ数実行 */
 		target_step = trace_counter;
 		infinity    = ONLY_1STEP;
-		only_1step  = ONLY_1STEP;
 		break;
 
 	case STEP:
 		/* 1ステップ実行 */
 		target_step = 1;
 		infinity    = ONLY_1STEP;
-		only_1step  = ONLY_1STEP;
 		break;
 
 	case TRACE_CHANGE:
 		/* 無限に実行 */
 		target_step = 0;
-		infinity    = ONLY_1STEP;
-		only_1step  = ONLY_1STEP;
+		infinity    = INFINITY_STEP;
 		break;
 	}
 
@@ -278,12 +186,13 @@ void emu_main(void)
 
 			switch (cpu_timing) {
 
+			case -1:
 			case 0:
 				/* select_main_cpu で指定されたほうのCPUを無限実行 */
 				if (select_main_cpu) {
-					(z80_exec)(&z80main_cpu, infinity);
+					z80_emu(&z80main_cpu, infinity);
 				} else {
-					(z80_exec)(&z80sub_cpu,  infinity);
+					z80_emu(&z80sub_cpu,  infinity);
 				}
 				break;
 
@@ -291,34 +200,55 @@ void emu_main(void)
 				/* dual_cpu_count==0 ならメインCPUを無限実行、
 				 *               !=0 ならメインサブを交互実行 */
 				if (dual_cpu_count == 0) {
-					(z80_exec)(&z80main_cpu, infinity);
+					z80_emu(&z80main_cpu, infinity);
 				} else {
-					(z80_exec)(&z80main_cpu, only_1step);
-					(z80_exec)(&z80sub_cpu,  only_1step);
+					z80_emu(&z80main_cpu, ONLY_1STEP);
+					z80_emu(&z80sub_cpu,  ONLY_1STEP);
 					dual_cpu_count --;
 				}
 				break;
 
 			case 2:
 				/* メインCPU、サブCPUを交互に 5us ずつ実行 */
-				if (main_state < 1 * JACKUP  &&  sub_state < 1 * JACKUP) {
-					main_state += (int)((cpu_clock_mhz * cpu_slice_us) * JACKUP);
-					sub_state  += (int)((3.9936        * cpu_slice_us) * JACKUP);
+				if ((main_state <= 0) && (sub_state <= 0)) {
+					main_state += (int) ((cpu_clock_mhz * cpu_slice_us) * JACKUP);
+					sub_state  += (int) ((3.9936        * cpu_slice_us) * JACKUP);
 				}
-				if (main_state >= 1 * JACKUP) {
-					wk = (infinity == INFINITY_STEP) ? main_state / JACKUP : ONLY_1STEP;
-					main_state -= (z80_exec(&z80main_cpu, wk)) * JACKUP;
-				}
-				if (sub_state >= 1 * JACKUP) {
-					wk = (infinity == INFINITY_STEP) ? sub_state / JACKUP : ONLY_1STEP;
-					sub_state  -= (z80_exec(&z80sub_cpu, wk)) * JACKUP;
+
+				if (infinity == INFINITY_STEP) {
+					/* 通常時: 5us実行 (最低でも1ステップは実行) */
+					if (main_state > 0) {
+						wk = MAX(ONLY_1STEP, (main_state / JACKUP));
+						main_state -= (z80_emu(&z80main_cpu, wk)) * JACKUP;
+					}
+					if (sub_state > 0) {
+						wk = MAX(ONLY_1STEP, (sub_state / JACKUP));
+						sub_state -= (z80_emu(&z80sub_cpu, wk)) * JACKUP;
+					}
+				} else {
+					/* TRACE/STEP実行時: 選択CPU側は1ステップだけ実行 */
+					if (main_state > 0) {
+						if (select_main_cpu) {
+							wk = ONLY_1STEP;
+						} else {
+							wk = MAX(ONLY_1STEP, (main_state / JACKUP));
+						}
+						main_state -= (z80_emu(&z80main_cpu, wk)) * JACKUP;
+					}
+					if (sub_state > 0) {
+						if (! select_main_cpu) {
+							wk = ONLY_1STEP;
+						} else {
+							wk = MAX(ONLY_1STEP, (sub_state / JACKUP));
+						}
+						sub_state -= (z80_emu(&z80sub_cpu, wk)) * JACKUP;
+					}
 				}
 				break;
 			}
 
 			/* TRACE/STEP実行時、規定ステップ実行完了したら、モニターに遷移する */
 			if (emu_rest_step) {
-				passed_step ++;
 				if (-- emu_rest_step <= 0) {
 					quasi88_debug();
 				}
@@ -328,7 +258,7 @@ void emu_main(void)
 			if (quasi88_event_flags & EVENT_AUDIO_UPDATE) {
 				quasi88_event_flags &= ~EVENT_AUDIO_UPDATE;
 
-				profiler_lapse(PROF_LAPSE_CPU2);
+				;
 			}
 
 			/* ビデオ出力タイミングであれば、CPU処理は一旦中止。上位に抜ける */
@@ -347,12 +277,8 @@ void emu_main(void)
 		break;
 
 	/*------------------------------------------------------------------------*/
-
-	/* こっちのブレーク処理はうまく動かないかも・・・ (未検証) */
-
 	case TRACE_CHANGE: /* CPUが切り替わるまで処理をする */
-		if (cpu_timing >= 1) {
-			printf("command 'trace change' can use when -cpu 0\n");
+		if (cpu_timing > 0) {
 			quasi88_monitor();
 			break;
 		}
@@ -360,32 +286,15 @@ void emu_main(void)
 		wk = select_main_cpu;
 		while (wk == select_main_cpu) {
 			if (select_main_cpu) {
-				(z80_exec)(&z80main_cpu, infinity);
+				z80_emu(&z80main_cpu, infinity);
 			} else {
-				(z80_exec)(&z80sub_cpu,  infinity);
+				z80_emu(&z80sub_cpu,  infinity);
 			}
+
 			if (emu_rest_step) {
-				passed_step ++;
 				if (-- emu_rest_step <= 0) {
 					quasi88_debug();
 				}
-			}
-
-			if (quasi88_event_flags & EVENT_AUDIO_UPDATE) {
-				quasi88_event_flags &= ~EVENT_AUDIO_UPDATE;
-
-				profiler_lapse(PROF_LAPSE_SND);
-				/* サウンド出力 */
-				xmame_sound_update();
-
-				profiler_lapse(PROF_LAPSE_AUDIO);
-				/* サウンド出力 その2 */
-				xmame_update_video_and_audio();
-
-				profiler_lapse(PROF_LAPSE_INPUT);
-				/* イベント処理 */
-				event_update();
-				keyboard_update();
 			}
 
 			if (quasi88_event_flags & EVENT_FRAME_UPDATE) {
@@ -398,7 +307,6 @@ void emu_main(void)
 		quasi88_debug();
 		break;
 	}
-	return;
 }
 
 
@@ -517,7 +425,7 @@ void quasi88_set_subcpu_mode(int mode)
 	emu_reset();
 	/* 他に再初期化すべきものはないのか？ */
 
-	submenu_controll(CTRL_CHG_SUBCPU);
+	toolbar_controll(CTRL_CHG_SUBCPU);
 }
 
 

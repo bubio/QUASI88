@@ -19,12 +19,12 @@
   1. SDL の ウェブサイト https://www.libsdl.org/ より、 
      開発者向けライブラリをダウンロードしておきます。
 
-     2025/06/15現在、SDL2のバージョンは 2.32.8 です。
+     2026/01/01現在、SDL2のバージョンは 2.32.10 です。
      Windows Visual C++ 用は、以下の URL より入手できます。
 
-        https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-devel-2.32.8-VC.zip
+        https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-devel-2.32.10-VC.zip
 
-     これを展開すると、 SDL2-2.32.8 というような名前のフォルダができます。
+     これを展開すると、 SDL2-2.32.10 というような名前のフォルダができます。
      このフォルダの中にある、 include フォルダと、 lib フォルダを、
      フォルダごと visualc\SDL2 フォルダの中にコピーしてください。
 

@@ -85,7 +85,7 @@ const char *osd_dir_lcfg(void)
 static int set_new_dir(const char *newdir, char **dir)
 {
 	char *p;
-	p = malloc(strlen(newdir) + 1);
+	p = (char *)malloc(strlen(newdir) + 1);
 	if (p) {
 		free(*dir);
 		*dir = p;

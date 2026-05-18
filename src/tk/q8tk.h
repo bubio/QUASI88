@@ -369,11 +369,10 @@ struct	_Q8tkWidget {
 			Q8tkWidget	*selection_entry;	/* ファイル名入力のエントリ */
 			Q8tkWidget	*ok_button;			/* OKのボタン */
 			Q8tkWidget	*cancel_button;		/* Cancelのボタン */
-			Q8tkWidget	*eject_button;		/* Ejectのボタン (簡易版のみ) */
 			Q8tkWidget	*dir_name;			/* ディレクトリ名のラベル */
 			Q8tkWidget	*nr_files;			/* ファイル数のラベル */
 			Q8tkWidget	*ro_button;			/* ReadOnlyのチェックボタン */
-			Q8tkWidget	*drv_button[2];		/* Drive N:のチェックボタン */
+			Q8tkWidget	*simple_hbox;		/* 簡易版ウィジット追加用HBOX */
 			int			selection_changed;	/* 真で別のLIST ITEMを選択した */
 			int			width;				/* 表示幅 */
 		} fselect;
@@ -773,9 +772,9 @@ void			q8tk_dialog_set_style(Q8tkWidget *widget,
 
 /* FILE_SELECTION が通常版か簡易版かを判定するマクロ                    */
 #define Q8TK_IS_NORMAL_FILE_SELECTION(w)	\
-		(((w)->stat.window.work->stat.fselect.eject_button) == NULL)
+		(((w)->stat.window.work->stat.fselect.simple_hbox) == NULL)
 #define Q8TK_IS_SIMPLE_FILE_SELECTION(w)	\
-		(((w)->stat.window.work->stat.fselect.eject_button) != NULL)
+		(((w)->stat.window.work->stat.fselect.simple_hbox) != NULL)
 
 
 Q8tkWidget		*q8tk_file_selection_new(const char *title, int select_ro);
@@ -784,7 +783,6 @@ const	char	*q8tk_file_selection_get_filename(Q8tkWidget *fselect);
 void			q8tk_file_selection_set_filename(Q8tkWidget *fselect,
 												 const char *filename);
 int				q8tk_file_selection_get_readonly(Q8tkWidget *fselect);
-int				q8tk_file_selection_simple_get_drive(Q8tkWidget *fselect);
 
 int				q8tk_utility_view(const char *filename);
 

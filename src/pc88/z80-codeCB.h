@@ -30,9 +30,9 @@
 		M_RLC(z80->HL.B.l);
 		break;
 	case RLC_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RLC(I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RLC_A:
 		M_RLC(z80->AF.B.h);
@@ -57,9 +57,9 @@
 		M_RRC(z80->HL.B.l);
 		break;
 	case RRC_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RRC(I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RRC_A:
 		M_RRC(z80->AF.B.h);
@@ -84,9 +84,9 @@
 		M_RL(z80->HL.B.l);
 		break;
 	case RL_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RL(I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RL_A:
 		M_RL(z80->AF.B.h);
@@ -111,9 +111,9 @@
 		M_RR(z80->HL.B.l);
 		break;
 	case RR_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RR(I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RR_A:
 		M_RR(z80->AF.B.h);
@@ -138,9 +138,9 @@
 		M_SLA(z80->HL.B.l);
 		break;
 	case SLA_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SLA(I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SLA_A:
 		M_SLA(z80->AF.B.h);
@@ -165,9 +165,9 @@
 		M_SRA(z80->HL.B.l);
 		break;
 	case SRA_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SRA(I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SRA_A:
 		M_SRA(z80->AF.B.h);
@@ -192,9 +192,9 @@
 		M_SLL(z80->HL.B.l);
 		break;
 	case SLL_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SLL(I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SLL_A:
 		M_SLL(z80->AF.B.h);
@@ -219,9 +219,9 @@
 		M_SRL(z80->HL.B.l);
 		break;
 	case SRL_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SRL(I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SRL_A:
 		M_SRL(z80->AF.B.h);
@@ -248,7 +248,7 @@
 		M_BIT(0, z80->HL.B.l);
 		break;
 	case BIT_0_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_BIT(0, I);
 		break;
 	case BIT_0_A:
@@ -274,7 +274,7 @@
 		M_BIT(1, z80->HL.B.l);
 		break;
 	case BIT_1_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_BIT(1, I);
 		break;
 	case BIT_1_A:
@@ -300,7 +300,7 @@
 		M_BIT(2, z80->HL.B.l);
 		break;
 	case BIT_2_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_BIT(2, I);
 		break;
 	case BIT_2_A:
@@ -326,7 +326,7 @@
 		M_BIT(3, z80->HL.B.l);
 		break;
 	case BIT_3_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_BIT(3, I);
 		break;
 	case BIT_3_A:
@@ -352,7 +352,7 @@
 		M_BIT(4, z80->HL.B.l);
 		break;
 	case BIT_4_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_BIT(4, I);
 		break;
 	case BIT_4_A:
@@ -378,7 +378,7 @@
 		M_BIT(5, z80->HL.B.l);
 		break;
 	case BIT_5_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_BIT(5, I);
 		break;
 	case BIT_5_A:
@@ -404,7 +404,7 @@
 		M_BIT(6, z80->HL.B.l);
 		break;
 	case BIT_6_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_BIT(6, I);
 		break;
 	case BIT_6_A:
@@ -430,7 +430,7 @@
 		M_BIT(7, z80->HL.B.l);
 		break;
 	case BIT_7_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_BIT(7, I);
 		break;
 	case BIT_7_A:
@@ -456,9 +456,9 @@
 		M_RES(0, z80->HL.B.l);
 		break;
 	case RES_0_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RES(0, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RES_0_A:
 		M_RES(0, z80->AF.B.h);
@@ -483,9 +483,9 @@
 		M_RES(1, z80->HL.B.l);
 		break;
 	case RES_1_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RES(1, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RES_1_A:
 		M_RES(1, z80->AF.B.h);
@@ -510,9 +510,9 @@
 		M_RES(2, z80->HL.B.l);
 		break;
 	case RES_2_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RES(2, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RES_2_A:
 		M_RES(2, z80->AF.B.h);
@@ -537,9 +537,9 @@
 		M_RES(3, z80->HL.B.l);
 		break;
 	case RES_3_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RES(3, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RES_3_A:
 		M_RES(3, z80->AF.B.h);
@@ -564,9 +564,9 @@
 		M_RES(4, z80->HL.B.l);
 		break;
 	case RES_4_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RES(4, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RES_4_A:
 		M_RES(4, z80->AF.B.h);
@@ -591,9 +591,9 @@
 		M_RES(5, z80->HL.B.l);
 		break;
 	case RES_5_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RES(5, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RES_5_A:
 		M_RES(5, z80->AF.B.h);
@@ -618,9 +618,9 @@
 		M_RES(6, z80->HL.B.l);
 		break;
 	case RES_6_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RES(6, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RES_6_A:
 		M_RES(6, z80->AF.B.h);
@@ -645,9 +645,9 @@
 		M_RES(7, z80->HL.B.l);
 		break;
 	case RES_7_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_RES(7, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case RES_7_A:
 		M_RES(7, z80->AF.B.h);
@@ -672,9 +672,9 @@
 		M_SET(0, z80->HL.B.l);
 		break;
 	case SET_0_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SET(0, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SET_0_A:
 		M_SET(0, z80->AF.B.h);
@@ -699,9 +699,9 @@
 		M_SET(1, z80->HL.B.l);
 		break;
 	case SET_1_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SET(1, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SET_1_A:
 		M_SET(1, z80->AF.B.h);
@@ -726,9 +726,9 @@
 		M_SET(2, z80->HL.B.l);
 		break;
 	case SET_2_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SET(2, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SET_2_A:
 		M_SET(2, z80->AF.B.h);
@@ -753,9 +753,9 @@
 		M_SET(3, z80->HL.B.l);
 		break;
 	case SET_3_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SET(3, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SET_3_A:
 		M_SET(3, z80->AF.B.h);
@@ -780,9 +780,9 @@
 		M_SET(4, z80->HL.B.l);
 		break;
 	case SET_4_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SET(4, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SET_4_A:
 		M_SET(4, z80->AF.B.h);
@@ -807,9 +807,9 @@
 		M_SET(5, z80->HL.B.l);
 		break;
 	case SET_5_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SET(5, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SET_5_A:
 		M_SET(5, z80->AF.B.h);
@@ -834,9 +834,9 @@
 		M_SET(6, z80->HL.B.l);
 		break;
 	case SET_6_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SET(6, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SET_6_A:
 		M_SET(6, z80->AF.B.h);
@@ -861,9 +861,9 @@
 		M_SET(7, z80->HL.B.l);
 		break;
 	case SET_7_xHL:
-		I = M_RDMEM(z80->HL.W);
+		I = M_RDMEM(z80, z80->HL.W);
 		M_SET(7, I);
-		M_WRMEM(z80->HL.W, I);
+		M_WRMEM(z80, z80->HL.W, I);
 		break;
 	case SET_7_A:
 		M_SET(7, z80->AF.B.h);

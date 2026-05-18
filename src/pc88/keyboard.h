@@ -59,9 +59,9 @@ enum {									/* ファンクションキーの機能
 	FN_SNAPSHOT,
 	FN_STATUS,
 	FN_MENU,
-	FN_MAX_SPEED,
-	FN_MAX_CLOCK,
-	FN_MAX_BOOST,
+	FN_MAX_SPEED,	/* 削除予定 */
+	FN_MAX_CLOCK,	/* 削除予定 */
+	FN_MAX_BOOST,	/* 削除予定 */
 	FN_ROMAJI_KEY,
 	FN_NUM_KEY,
 	FN_PREV_KEY,
@@ -75,10 +75,6 @@ enum {									/* ファンクションキーの機能
 };
 
 extern int function_f[ 1 + 20 ];		/* ファンクションキーの機能 */
-
-extern int    fn_max_speed;
-extern double fn_max_clock;
-extern int    fn_max_boost;
 
 
 extern int romaji_type;					/* ローマ字変換のタイプ */

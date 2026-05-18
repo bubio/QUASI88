@@ -3424,21 +3424,6 @@ void pc88main_init(int init)
 		z80_reset(&z80main_cpu);
 	}
 
-	pc88main_bus_setup();
-
-	z80main_cpu.intr_update = main_INT_update;
-	z80main_cpu.intr_ack    = main_INT_chk;
-
-	z80main_cpu.break_if_halt = FALSE;            /* for debug */
-	z80main_cpu.PC_prev   = z80main_cpu.PC;       /* dummy for monitor */
-
-#ifdef  DEBUGLOG
-	z80main_cpu.log = TRUE;
-#else
-	z80main_cpu.log = FALSE;
-#endif
-
-
 	/* RAMを電源投入時パターンで初期化 */
 
 	if (init == INIT_POWERON) {
@@ -3575,9 +3560,9 @@ void pc88main_init(int init)
 }
 
 
-/************************************************************************/
-/* PC88 メインシステム 終了                                             */
-/************************************************************************/
+/***********************************************************************
+ * PC88 メインシステム 終了
+ ************************************************************************/
 void pc88main_term(void)
 {
 	printer_term();
@@ -3594,142 +3579,47 @@ void pc88main_term(void)
 
 
 /***********************************************************************
- * ブレークポイント関連
- ************************************************************************/
-INLINE void check_break_point(int type, word addr, byte data, char *str)
-{
-	int i;
-
-	if (quasi88_is_monitor()) {
-		/* モニターモード時はスルー */
-		return;
-	}
-	for (i = 0; i < NR_BP; i++) {
-		if (break_point[BP_MAIN][i].type == type &&
-			break_point[BP_MAIN][i].addr == addr) {
-			printf("*** Break at %04x *** "
-				   "( MAIN - #%d [ %s %04XH , data = %02XH ]\n",
-				   z80main_cpu.PC.W, i + 1, str, addr, data);
-			quasi88_debug();
-			break;
-		}
-	}
-}
-
-byte main_fetch_with_BP(word addr)
-{
-	byte data = main_fetch(addr);
-	check_break_point(BP_READ, addr, data, "FETCH from");
-	return data;
-}
-
-byte main_mem_read_with_BP(word addr)
-{
-	byte data = main_mem_read(addr);
-	check_break_point(BP_READ, addr, data, "READ from");
-	return data;
-}
-
-void main_mem_write_with_BP(word addr, byte data)
-{
-	main_mem_write(addr, data);
-	check_break_point(BP_WRITE, addr, data, "WRITE to");
-}
-
-byte main_io_in_with_BP(byte port)
-{
-	byte data =  main_io_in(port);
-	check_break_point(BP_IN, port, data, "IN from");
-	return data;
-}
-
-void main_io_out_with_BP(byte port, byte data)
-{
-	main_io_out(port, data);
-	check_break_point(BP_OUT, port, data, "OUT to");
-}
-
-
-
-/***********************************************************************
  *
  ************************************************************************/
-void pc88main_bus_setup(void)
+void pc88main_cpu_init(void)
 {
-#ifdef USE_MONITOR
-
-	int i, buf[4];
-	for (i = 0; i < 4; i++) {
-		buf[i] = 0;
-	}
-	for (i = 0; i < NR_BP; i++) {
-		switch (break_point[BP_MAIN][i].type) {
-		case BP_READ:
-			buf[0]++;
-			break;
-		case BP_WRITE:
-			buf[1]++;
-			break;
-		case BP_IN:
-			buf[2]++;
-			break;
-		case BP_OUT:
-			buf[3]++;
-			break;
-		}
-	}
+	memset(&z80main_cpu, 0, sizeof(z80main_cpu));
 
 	if (memory_wait || highspeed_mode) {
-		if (buf[0]) {
-			z80main_cpu.fetch   = main_fetch_with_BP;
-		} else {
-			z80main_cpu.fetch   = main_fetch;
-		}
+		z80main_cpu.fetch = main_fetch;
 	} else {
-		if (buf[0]) {
-			z80main_cpu.fetch   = main_mem_read_with_BP;
-		} else {
-			z80main_cpu.fetch   = main_mem_read;
-		}
-	}
-
-	if (buf[0]) {
-		z80main_cpu.mem_read  = main_mem_read_with_BP;
-	} else {
-		z80main_cpu.mem_read  = main_mem_read;
-	}
-
-	if (buf[1]) {
-		z80main_cpu.mem_write = main_mem_write_with_BP;
-	} else {
-		z80main_cpu.mem_write = main_mem_write;
-	}
-
-	if (buf[2]) {
-		z80main_cpu.io_read   = main_io_in_with_BP;
-	} else {
-		z80main_cpu.io_read   = main_io_in;
-	}
-
-	if (buf[3]) {
-		z80main_cpu.io_write  = main_io_out_with_BP;
-	} else {
-		z80main_cpu.io_write  = main_io_out;
-	}
-
-#else
-
-	if (memory_wait || highspeed_mode) {
-		z80main_cpu.fetch   = main_fetch;
-	} else {
-		z80main_cpu.fetch   = main_mem_read;
+		z80main_cpu.fetch = main_mem_read;
 	}
 	z80main_cpu.mem_read  = main_mem_read;
 	z80main_cpu.mem_write = main_mem_write;
 	z80main_cpu.io_read   = main_io_in;
 	z80main_cpu.io_write  = main_io_out;
 
+	z80main_cpu.intr_update = main_INT_update;
+	z80main_cpu.intr_ack    = main_INT_chk;
+
+	z80main_cpu.break_if_halt = FALSE;          /* for debug */
+
+
+#ifdef  USE_MONITOR
+	z80main_cpu.cpuname       = "MAIN";
+	z80main_cpu.PC_prev       = z80main_cpu.PC; /* dummy for monitor */
 #endif
+
+#ifdef  DEBUGLOG
+	z80main_cpu.log = TRUE;
+#else
+	z80main_cpu.log = FALSE;
+#endif
+}
+
+void pc88main_cpu_update(void)
+{
+	if (memory_wait || highspeed_mode) {
+		z80main_cpu.fetch = main_fetch;
+	} else {
+		z80main_cpu.fetch = main_mem_read;
+	}
 }
 
 
