@@ -79,6 +79,7 @@ jobs:
           chmod +x linuxdeploy-${{ matrix.linuxdeploy_arch }}.AppImage
           ./linuxdeploy-${{ matrix.linuxdeploy_arch }}.AppImage --appimage-extract-and-run --appdir=build/AppDir -d build/AppDir/usr/share/applications/quasi88.desktop -o appimage
           mv QUASI88-*.AppImage QUASI88_Linux_${{ matrix.arch }}.AppImage
+          rm linuxdeploy-${{ matrix.linuxdeploy_arch }}.AppImage
           
           # Build DEB and RPM
           cd build
@@ -90,7 +91,7 @@ jobs:
         if: ${{ github.event_name == 'release' && !env.ACT }}
         uses: svenstaro/upload-release-action@v2
         with:
-          file: "{*.AppImage,build/*.deb,build/*.rpm}"
+          file: "{QUASI88_Linux_*.AppImage,build/*.deb,build/*.rpm}"
           file_glob: true
           overwrite: true
           tag: ${{ github.ref_name }}
