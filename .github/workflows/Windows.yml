@@ -60,7 +60,7 @@ jobs:
           Copy-Item dist/bin/*.dll artifacts/ -Force
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: QUASI88_Windows_${{ matrix.arch }}
           path: artifacts/
