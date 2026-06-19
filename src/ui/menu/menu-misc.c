@@ -372,7 +372,7 @@ static char snap_filename[ QUASI88_MAX_FILENAME ];
 
 /*----------------------------------------------------------------------*/
 /* 画面保存実行 (「開始」クリック時) */
-static void cb_misc_snapshot_do(void)
+static void cb_misc_snapshot_do(UNUSED_WIDGET, UNUSED_PARM)
 {
 	/* 念のため、スナップショットのファイル名を再設定 */
 	filename_set_snap_base(q8tk_entry_get_text(misc_snapshot_entry));
@@ -578,7 +578,7 @@ static void sub_misc_waveout_sensitive(void)
 }
 /*----------------------------------------------------------------------*/
 /* サウンド保存開始 (「開始」クリック時) */
-static void cb_misc_waveout_start(void)
+static void cb_misc_waveout_start(UNUSED_WIDGET, UNUSED_PARM)
 {
 	/* 念のため、サウンド出力のファイル名を再設定 */
 	filename_set_wav_base(q8tk_entry_get_text(misc_waveout_entry));
@@ -593,7 +593,7 @@ static void cb_misc_waveout_start(void)
 
 /*----------------------------------------------------------------------*/
 /* サウンド出力停止 (「停止」クリック時) */
-static void cb_misc_waveout_stop(void)
+static void cb_misc_waveout_stop(UNUSED_WIDGET, UNUSED_PARM)
 {
 	quasi88_waveout(FALSE);
 
