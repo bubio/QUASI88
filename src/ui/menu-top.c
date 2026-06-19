@@ -63,8 +63,10 @@ static struct {
  * アクセラレータキーを設定する。そのため、ダミーウィジット利用 */
 
 #define cb_note_fake(fn,n)												\
-static void cb_note_fake_##fn(UNUSED_WIDGET, Q8tkWidget *notebook)		\
+static void cb_note_fake_##fn(UNUSED_WIDGET, void *data)					\
 {																		\
+	Q8tkWidget *notebook = data;										\
+																			\
 	q8tk_notebook_set_page(notebook, n);								\
 }
 cb_note_fake(f1, 0)
@@ -79,8 +81,9 @@ cb_note_fake(f9, 8)
 cb_note_fake(f10, 9)
 
 /* 以下のアクセラレータキー処理は、 floi氏 提供。 Thanks ! */
-static void cb_note_fake_prev(UNUSED_WIDGET, Q8tkWidget *notebook)
+static void cb_note_fake_prev(UNUSED_WIDGET, void *data)
 {
+	Q8tkWidget *notebook = data;
 	int n = q8tk_notebook_current_page(notebook) - 1;
 	if (n < 0) {
 		n = COUNTOF(menu_page) - 1;
@@ -88,8 +91,9 @@ static void cb_note_fake_prev(UNUSED_WIDGET, Q8tkWidget *notebook)
 	q8tk_notebook_set_page(notebook, n);
 }
 
-static void cb_note_fake_next(UNUSED_WIDGET, Q8tkWidget *notebook)
+static void cb_note_fake_next(UNUSED_WIDGET, void *data)
 {
+	Q8tkWidget *notebook = data;
 	int n = q8tk_notebook_current_page(notebook) + 1;
 	if (COUNTOF(menu_page) <= n) {
 		n = 0;
@@ -99,7 +103,7 @@ static void cb_note_fake_next(UNUSED_WIDGET, Q8tkWidget *notebook)
 
 static struct {
 	int		key;
-	void	(*cb_func)(Q8tkWidget *, Q8tkWidget *);
+	Q8tkSignalFunc cb_func;
 } menu_fkey[] = {
 	{ Q8TK_KEY_F1,		cb_note_fake_f1,	},
 	{ Q8TK_KEY_F2,		cb_note_fake_f2,	},

@@ -47,7 +47,7 @@ int q8tk_signal_connect(Q8tkWidget *widget, const char *name,
 
 	case Q8TK_TYPE_WINDOW:
 		if (strcmp(name, "inactivate") == 0) {
-			widget->user_event_0      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_0      = func;
 			widget->user_event_0_parm = func_data;
 			return 0;
 		}
@@ -55,7 +55,7 @@ int q8tk_signal_connect(Q8tkWidget *widget, const char *name,
 
 	case Q8TK_TYPE_BUTTON:
 		if (strcmp(name, "clicked") == 0) {
-			widget->user_event_0      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_0      = func;
 			widget->user_event_0_parm = func_data;
 			return 0;
 		}
@@ -67,11 +67,11 @@ int q8tk_signal_connect(Q8tkWidget *widget, const char *name,
 	case Q8TK_TYPE_RADIOPUSH_BUTTON:
 	case Q8TK_TYPE_SWITCH:
 		if (strcmp(name, "clicked") == 0) {
-			widget->user_event_0      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_0      = func;
 			widget->user_event_0_parm = func_data;
 			return 0;
 		} else if (strcmp(name, "toggled") == 0) {
-			widget->user_event_1      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_1      = func;
 			widget->user_event_1_parm = func_data;
 			return 0;
 		}
@@ -79,7 +79,7 @@ int q8tk_signal_connect(Q8tkWidget *widget, const char *name,
 
 	case Q8TK_TYPE_NOTEBOOK:
 		if (strcmp(name, "switch_page") == 0) {
-			widget->user_event_0      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_0      = func;
 			widget->user_event_0_parm = func_data;
 			return 0;
 		}
@@ -87,11 +87,11 @@ int q8tk_signal_connect(Q8tkWidget *widget, const char *name,
 
 	case Q8TK_TYPE_COMBO:
 		if (strcmp(name, "activate") == 0) {
-			widget->user_event_0      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_0      = func;
 			widget->user_event_0_parm = func_data;
 			return 0;
 		} else if (strcmp(name, "changed") == 0) {
-			widget->user_event_1      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_1      = func;
 			widget->user_event_1_parm = func_data;
 			return 0;
 		}
@@ -99,7 +99,7 @@ int q8tk_signal_connect(Q8tkWidget *widget, const char *name,
 
 	case Q8TK_TYPE_LISTBOX:
 		if (strcmp(name, "selection_changed") == 0) {
-			widget->user_event_0      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_0      = func;
 			widget->user_event_0_parm = func_data;
 			return 0;
 		}
@@ -107,7 +107,7 @@ int q8tk_signal_connect(Q8tkWidget *widget, const char *name,
 
 	case Q8TK_TYPE_LIST_ITEM:
 		if (strcmp(name, "select") == 0) {
-			widget->user_event_0      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_0      = func;
 			widget->user_event_0_parm = func_data;
 			return 0;
 		}
@@ -115,7 +115,7 @@ int q8tk_signal_connect(Q8tkWidget *widget, const char *name,
 
 	case Q8TK_TYPE_ADJUSTMENT:
 		if (strcmp(name, "value_changed") == 0) {
-			widget->user_event_0      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_0      = func;
 			widget->user_event_0_parm = func_data;
 			return 0;
 		}
@@ -123,11 +123,11 @@ int q8tk_signal_connect(Q8tkWidget *widget, const char *name,
 
 	case Q8TK_TYPE_ENTRY:
 		if (strcmp(name, "activate") == 0) {
-			widget->user_event_0      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_0      = func;
 			widget->user_event_0_parm = func_data;
 			return 0;
 		} else if (strcmp(name, "changed") == 0) {
-			widget->user_event_1      = (void (*)(Q8tkWidget *, void *))func;
+			widget->user_event_1      = func;
 			widget->user_event_1_parm = func_data;
 			return 0;
 		}

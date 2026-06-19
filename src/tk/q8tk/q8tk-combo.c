@@ -100,8 +100,9 @@
 
 /* ポップアップウインドウで、LIST ITEM 選択 or ESCキー押下 or ウインドウ外を
  * マウスクリックした時のコールバック関数。ポップアップウインドウを削除する */
-static void combo_fake_callback(UNUSED_WIDGET, Q8tkWidget *parent)
+static void combo_fake_callback(UNUSED_WIDGET, void *data)
 {
+	Q8tkWidget *parent = data;
 	Q8List *l;
 
 	l = parent->stat.combo.list;
@@ -126,9 +127,10 @@ static void combo_fake_callback(UNUSED_WIDGET, Q8tkWidget *parent)
 }
 
 /* ポップアップウインドウの LIST ITEM をマウスクリックした時のコールバック */
-static void combo_event_list_callback(Q8tkWidget *list_item,
-									  Q8tkWidget *parent)
+static void combo_event_list_callback(Q8tkWidget *list_item, void *data)
 {
+	Q8tkWidget *parent = data;
+
 	if (strcmp(parent->stat.combo.entry->name, list_item->child->name) == 0) {
 		/* 現在の入力と、選択したリストの文字列が同じなので、シグナルは無し */
 		;
@@ -317,12 +319,16 @@ static void combo_event_key_on(Q8tkWidget *widget, int key)
 }
 
 /* エントリ部に入力があったとき、シグナル発生 */
-static void combo_event_entry_activate(UNUSED_WIDGET, Q8tkWidget *parent)
+static void combo_event_entry_activate(UNUSED_WIDGET, void *data)
 {
+	Q8tkWidget *parent = data;
+
 	widget_signal_do(parent, "activate");
 }
-static void combo_event_entry_changed(UNUSED_WIDGET, Q8tkWidget *parent)
+static void combo_event_entry_changed(UNUSED_WIDGET, void *data)
 {
+	Q8tkWidget *parent = data;
+
 	widget_signal_do(parent, "changed");
 }
 
