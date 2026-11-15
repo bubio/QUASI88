@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=QUASI88
+Comment=PC-8801 Emulator
+Exec=QUASI88
+Icon=appicon_linux
+Categories=Game;Emulator;
+Terminal=false

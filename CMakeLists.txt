@@ -298,6 +298,10 @@ endif()
 
 # --- Installation and Packaging -----------------------------------------
 install(TARGETS QUASI88 BUNDLE DESTINATION . RUNTIME DESTINATION bin)
+if(UNIX AND NOT APPLE)
+    install(FILES quasi88.desktop DESTINATION share/applications)
+    install(FILES appicon_linux.png DESTINATION share/icons/hicolor/256x256/apps)
+endif()
 
 # CPack
 set(CPACK_PACKAGE_NAME "QUASI88")
