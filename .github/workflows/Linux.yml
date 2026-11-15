@@ -59,20 +59,6 @@ jobs:
       - name: Build AppImage and Packages for Release
         if: ${{ github.event_name == 'release' && !env.ACT }}
         run: |
-          # Prepare AppImage metadata
-          mkdir -p build/AppDir/usr/share/applications
-          mkdir -p build/AppDir/usr/share/icons/hicolor/scalable/apps
-          cat <<EOF > build/AppDir/usr/share/applications/quasi88.desktop
-          [Desktop Entry]
-          Name=QUASI88
-          Exec=QUASI88
-          Icon=quasi88
-          Type=Application
-          Categories=Game;Emulator;
-          Comment=PC-8801 Emulator
-          EOF
-          cp AppIcon.png build/AppDir/usr/share/icons/hicolor/scalable/apps/quasi88.png
-          
           # Install and Run linuxdeploy
           cmake --install build --prefix build/AppDir/usr
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.linuxdeploy_arch }}.AppImage
